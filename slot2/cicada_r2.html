@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cicada3301</title>
+  <link rel="icon" href="cicadaImg.png" type="image/png">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      padding: 30px;
+      background-color: #000;
+      color: #ff0000;
+      margin: 0;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-image: url('cicadaImg.png');
+      background-repeat: no-repeat;
+      background-size: 400px auto;
+      opacity: 1;
+      width: 400px;
+      height: 400px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    h2, h3 {
+      color: #ff1a1a;
+      z-index: 1;
+    }
+
+    .floating-tabs {
+      position: fixed;
+      top: 50px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .floating-tabs a, .floating-tabs button {
+      background-color: #111;
+      color: #ff1a1a;
+      padding: 8px 12px;
+      border: 1px solid #ff1a1a;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: background-color 0.3s;
+      font-family: 'Share Tech Mono', monospace;
+      cursor: pointer;
+    }
+
+    .floating-tabs a:hover, .floating-tabs button:hover {
+      background-color: #ff1a1a;
+      color: black;
+    }
+
+    .main-content {
+      margin-left: 180px;
+      position: relative;
+      z-index: 1;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 300px;
+      margin-bottom: 10px;
+      background-color: #111;
+      color: #ff0000;
+      border: 1px solid #ff1a1a;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #111;
+      color: #ff1a1a;
+      border: 1px solid #ff1a1a;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #ff1a1a;
+      color: black;
+    }
+
+    #binarySection, #finalMission, #finalClues {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .binary-line {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #ff3333;
+    }
+
+    #cicada-text {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      font-size: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #ff1a1a;
+      width: 0;
+      color: #ff1a1a;
+      animation: typing 5s steps(35, end) forwards;
+      z-index: 1;
+    }
+
+    .top-left-date {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 14px;
+      color: #ff1a1a;
+      z-index: 2;
+    }
+
+    #poemText, #finalText {
+      white-space: pre-line;
+      color: #ff1a1a;
+      margin-top: 20px;
+    }
+
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 260px; }
+    }
+  </style>
+</head>
+
+<body oncontextmenu="return false">
+  <div class="top-left-date">
+    <b>30/04/<u>20??</u></b><br>
+    <b>EVERY LITTLE THING IS IMPORTANT.</b>
+  </div>
+
+  <div id="cicada-text">Cicada3301</div>
+
+  <div class="floating-tabs" id="initialClues">
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1Etap0QUfZz7AbS8b7vXToFIb4A6w_FmB/view?usp=drive_link')">Clue 1</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1tPi6K7yox3ttsc1pGaPkEj2uQ_S2HfoE/view?usp=drive_link')">Clue 2</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1dGVp6Nh5G6MCHq9DAM-u8WdYkFEXGtaz/view?usp=drive_link')">Clue 3</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1tpyq09JLPPIszOQvTHqitWBgTvXfmv8B/view?usp=drive_link')">Clue 4</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/11aFKXAf8qw8rVpYh0sGFuCPMP4Ywc9lC/view?usp=drive_link')">Clue 5</a>
+  </div>
+
+  <div class="main-content" id="mainContent">
+    <h2>Step 1: Explore the clues</h2>
+    <h2>Step 2: Submit the master code</h2>
+    <input type="text" id="numberInput" placeholder="Enter the full number" />
+    <button onclick="checkNumber()">Submit</button>
+
+    <div id="binarySection">
+      <h3>Choose the right options to enter the next mission</h3>
+      <div class="binary-line">Option 1 → <span id="bin1"></span></div>
+      <div class="binary-line">Option 2 → <span id="bin2"></span></div>
+      <div class="binary-line">Option 3 → <span id="bin3"></span></div>
+      <div class="binary-line">Option 4 → <span id="bin4"></span></div>
+      <div class="binary-line">Option 5 → <span id="bin5"></span></div>
+
+      <p>(Type both binaries manually – copy-paste won't work [suffer lol])</p>
+      <input type="text" id="binaryInput1" onpaste="return false" />
+      <input type="text" id="binaryInput2" onpaste="return false" />
+      <button onclick="checkBinary()">Submit</button>
+    </div>
+
+    <div id="finalMission">
+      <h2>Your Final Mission</h2>
+      <input type="text" id="finalPass" placeholder="Enter the final passkey" />
+      <button onclick="checkFinalPass()">Submit</button>
+    </div>
+
+    <div id="poemText" style="display:none;">
+      In downward paths, the core you'll find,<br>
+      Reverse their hearts to crack the sign.
+    </div>
+
+    <div id="finalText" style="display:none;">
+      Not all messages are meant to be heard as they arrive.<br>
+      Some truths unravel only when time rewinds.
+    </div>
+
+    <div id="finalClues" class="floating-tabs" style="top: auto; bottom: 30px; left: 20px;"></div>
+  </div>
+
+  <script>
+    const validBinaries = [(2014).toString(2), (2010).toString(2)];
+    const correctNumber = "20232014202420182010";
+
+    // Enhanced security measures to block developer tools
+    (function() {
+      // Block keyboard shortcuts for developer tools
+      document.addEventListener('keydown', function(e) {
+        // Block F12
+        if(e.key === 'F12' || e.keyCode === 123) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Block Ctrl+Shift+I / Cmd+Option+I (Inspect Element)
+        if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Block Ctrl+Shift+J / Cmd+Option+J (Console)
+        if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Block Ctrl+Shift+C / Cmd+Option+C (Inspector)
+        if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Block Ctrl+U / Cmd+Option+U (View Source)
+        if((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Block copy/paste as needed
+        if((e.ctrlKey || e.metaKey) && ['v', 'c', 'x'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+        }
+      }, false);
+      
+      // Block right click
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Detect DevTools opening
+      let devtools = function() {};
+      devtools.toString = function() {
+        if (this.opened) return;
+        this.opened = true;
+        
+        // You could add further actions when DevTools is detected
+        console.clear();
+        console.log("%cStop!", "color:red; font-size:60px; font-weight: bold;");
+        console.log("%cThis is a private area.", "color:red; font-size:20px;");
+      }
+      
+      setInterval(function() {
+        devtools.toString();
+      }, 1000);
+      
+      // Another detection method
+      let element = new Image();
+      Object.defineProperty(element, 'id', {
+        get: function() {
+          devtools.toString();
+        }
+      });
+      
+      // Check visibility state changes
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          const blurTimestamp = Date.now();
+          
+          // When the user returns to the page
+          document.addEventListener('visibilitychange', function checkReturn() {
+            if (document.visibilityState === 'visible') {
+              // If they were gone too long (possibly using DevTools)
+              if (Date.now() - blurTimestamp > 300) {
+                console.clear();
+              }
+              document.removeEventListener('visibilitychange', checkReturn);
+            }
+          });
+        }
+      });
+    })();
+
+    function checkNumber() {
+      const input = document.getElementById('numberInput').value;
+      if (input === correctNumber) {
+        document.getElementById('bin1').textContent = (2023).toString(2);
+        document.getElementById('bin2').textContent = (2014).toString(2);
+        document.getElementById('bin3').textContent = (2024).toString(2);
+        document.getElementById('bin4').textContent = (2018).toString(2);
+        document.getElementById('bin5').textContent = (2010).toString(2);
+        document.getElementById('binarySection').style.display = 'block';
+      } else {
+        alert("Incorrect number. Try again!");
+      }
+    }
+
+    function openCrosswordInBackground() {
+      // This opens a new tab without switching focus
+      const crosswordUrl = 'https://crosswordlabs.com/view/cicada-60';
+      const newWindow = window.open(crosswordUrl, '_blank');
+      if (newWindow) {
+        // This will bring focus back to the current window
+        window.focus();
+      } else {
+        // Alert if popup was blocked
+        alert("Please allow popups for this website to view the crossword puzzle.");
+      }
+    }
+
+    function checkBinary() {
+      const input1 = document.getElementById('binaryInput1').value.trim();
+      const input2 = document.getElementById('binaryInput2').value.trim();
+
+      if (validBinaries.includes(input1) && validBinaries.includes(input2) && input1 !== input2) {
+        document.getElementById('finalMission').style.display = 'block';
+        document.getElementById('poemText').style.display = 'block';
+        
+        // Automatically open crossword in a new background tab
+        openCrosswordInBackground();
+      } else {
+        alert("INVALID COMBINATION, PLEASE TRY AGAIN.");
+      }
+    }
+
+    function checkFinalPass() {
+      const pass = document.getElementById('finalPass').value.trim().toLowerCase();
+      if (pass === 'trexelgco') {
+        document.getElementById('initialClues').style.display = 'none';
+        document.getElementById('poemText').style.display = 'none';
+        document.getElementById('finalText').style.display = 'block';
+
+        const cluesDiv = document.getElementById('finalClues');
+        cluesDiv.innerHTML = `
+          <a href="#" onclick="window.open('https://drive.google.com/file/d/1vMAxYRtqTdnf6MohDYn8hAtuWUVeiiBJ/view?usp=drive_link')">Clue 6</a>
+          <a href="#" onclick="window.open('https://drive.google.com/file/d/1NLhmcw3YVaFxpdDfweAE8cu5M70KSXre/view?usp=drive_link')">Clue 7</a>
+          <a href="#" onclick="window.open('https://drive.google.com/file/d/1aKhNvfH2uEWvSZpCBNUmyvoOw-GzShW_/view?usp=drive_link')">Clue 8</a>
+          <a href="#" onclick="window.open('https://drive.google.com/file/d/1SsrzHAkFc203YjgXpQ2tH9E78EiyjkB9/view?usp=drive_link')">Clue 9</a>
+        `;
+        cluesDiv.style.display = 'flex';
+        cluesDiv.style.flexDirection = 'column';
+        cluesDiv.style.gap = '10px';
+      } else {
+        alert("Wrong passkey.");
+      }
+    }
+  </script>
+</body>
+</html>
