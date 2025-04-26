@@ -13,9 +13,6 @@
       background-color: #000;
       color: #ff0000;
       margin: 0;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 300px;
     }
 
     body::before {
@@ -56,8 +53,8 @@
       border: 1px solid #ff1a1a;
       border-radius: 4px;
       text-decoration: none;
-      transition: background-color 0.3s;
       font-family: 'Share Tech Mono', monospace;
+      transition: background-color 0.3s;
       cursor: pointer;
     }
 
@@ -72,22 +69,14 @@
       z-index: 1;
     }
 
-    input[type="text"] {
+    input[type="text"], button {
       padding: 10px;
-      width: 300px;
       margin-bottom: 10px;
-      background-color: #111;
-      color: #ff0000;
-      border: 1px solid #ff1a1a;
-    }
-
-    button {
-      padding: 10px 20px;
       background-color: #111;
       color: #ff1a1a;
       border: 1px solid #ff1a1a;
+      font-family: 'Share Tech Mono', monospace;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
 
     button:hover {
@@ -139,7 +128,7 @@
       from { width: 0; }
       to { width: 260px; }
     }
-    
+
     #timer {
       position: fixed;
       bottom: 10px;
@@ -253,7 +242,6 @@
       <div class="binary-line">Option 3 → <span id="bin3"></span></div>
       <div class="binary-line">Option 4 → <span id="bin4"></span></div>
       <div class="binary-line">Option 5 → <span id="bin5"></span></div>
-
       <p>(Type both binaries manually – copy-paste won't work [suffer lol])</p>
       <input type="text" id="binaryInput1" onpaste="return false" />
       <input type="text" id="binaryInput2" onpaste="return false" />
@@ -294,78 +282,44 @@
     <p>You completed the puzzle in <span id="finalTime">00:00</span></p>
   </div>
 
-  <!-- Include the QR Scanner library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
-
   <script>
     const validBinaries = [(2023).toString(2), (2024).toString(2)];
     const correctNumber = "20232020201020082024";
-  
-    // QR code validation values now expecting "clue 6", "clue 7", etc.
-    const qrValues = {
-      "clue6": "clue 6",
-      "clue7": "clue 7",
-      "clue8": "clue 8",
-      "clue9": "clue 9"
-    };
-  
-    let completedClues = {
-      "clue6": false,
-      "clue7": false,
-      "clue8": false,
-      "clue9": false
-    };
-  
-    let currentClue = null;
-    let qrScanner = null;
-  
+    const qrValues = { "clue6": "clue 6", "clue7": "clue 7", "clue8": "clue 8", "clue9": "clue 9" };
+    let completedClues = { "clue6": false, "clue7": false, "clue8": false, "clue9": false };
+    let currentClue = null, qrScanner = null;
+
     function updateTimer() {
       const startTime = parseInt(localStorage.getItem('puzzleStartTime') || Date.now().toString());
-      const timerEl = document.getElementById('timer');
-  
       setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
         const secs = String(elapsed % 60).padStart(2, '0');
-        timerEl.textContent = `${mins}:${secs}`;
+        document.getElementById('timer').textContent = `${mins}:${secs}`;
       }, 1000);
     }
-  
+
     window.addEventListener('DOMContentLoaded', updateTimer);
-  
+
     function checkNumber() {
-      const input = document.getElementById('numberInput').value;
-      if (input === correctNumber) {
-        document.getElementById('bin1').textContent = (2023).toString(2);
-        document.getElementById('bin2').textContent = (2020).toString(2);
-        document.getElementById('bin3').textContent = (2010).toString(2);
-        document.getElementById('bin4').textContent = (2008).toString(2);
-        document.getElementById('bin5').textContent = (2024).toString(2);
+      if (document.getElementById('numberInput').value === correctNumber) {
+        [2023,2020,2010,2008,2024].forEach((n,i)=>document.getElementById(`bin${i+1}`).textContent=n.toString(2));
         document.getElementById('binarySection').style.display = 'block';
       } else {
         alert("Incorrect number. Try again!");
       }
     }
-  
+
     function openCrosswordInBackground() {
-      const crosswordUrl = 'https://crosswordlabs.com/view/cicada-58';
-      const newWindow = window.open(crosswordUrl, '_blank');
-      if (newWindow) {
-        window.focus();
-      } else {
-        alert("Please allow popups for this website.");
-      }
+      const newWindow = window.open('https://crosswordlabs.com/view/cicada-58', '_blank');
+      if (!newWindow) alert("Please allow popups for this website.");
     }
-  
+
     function checkBinary() {
-      const input1 = document.getElementById('binaryInput1').value.trim();
-      const input2 = document.getElementById('binaryInput2').value.trim();
-  
-      if (validBinaries.includes(input1) && validBinaries.includes(input2) && input1 !== input2) {
+      const b1 = document.getElementById('binaryInput1').value.trim();
+      const b2 = document.getElementById('binaryInput2').value.trim();
+      if (validBinaries.includes(b1) && validBinaries.includes(b2) && b1 !== b2) {
         document.getElementById('finalMission').style.display = 'block';
         document.getElementById('poemText').style.display = 'block';
         openCrosswordInBackground();
@@ -373,117 +327,64 @@
         alert("INVALID COMBINATION, PLEASE TRY AGAIN.");
       }
     }
-  
+
     function checkFinalPass() {
-      const pass = document.getElementById('finalPass').value.trim().toUpperCase();
-      if (pass === 'ASCAM') {
+      if (document.getElementById('finalPass').value.trim().toUpperCase() === 'ASCAM') {
         document.getElementById('initialClues').style.display = 'none';
         document.getElementById('poemText').style.display = 'none';
         document.getElementById('finalText').style.display = 'block';
-  
         const cluesDiv = document.getElementById('finalClues');
-        cluesDiv.innerHTML = `
+        cluesDiv.innerHTML = Object.keys(qrValues).map(id => `
           <div class="clue-item">
-            <a href="#" onclick="window.open('https://drive.google.com/file/d/1k11sKtLTR6KuNBzpjPnv6j0W2einnbQt/view?usp=drive_link')">Clue 6</a>
-            <span class="checkbox" id="checkbox-clue6"></span>
-            <button onclick="openQRScanner('clue6')">Scan QR</button>
-          </div>
-          <div class="clue-item">
-            <a href="#" onclick="window.open('https://drive.google.com/file/d/13dJem8AVPzVie4o7ho90RJ5dSTk5VJp7/view?usp=drive_link')">Clue 7</a>
-            <span class="checkbox" id="checkbox-clue7"></span>
-            <button onclick="openQRScanner('clue7')">Scan QR</button>
-          </div>
-          <div class="clue-item">
-            <a href="#" onclick="window.open('https://drive.google.com/file/d/181wBLzg-fE2--SYkV5oBcNoNb7qZ8pKs/view?usp=drive_link')">Clue 8</a>
-            <span class="checkbox" id="checkbox-clue8"></span>
-            <button onclick="openQRScanner('clue8')">Scan QR</button>
-          </div>
-          <div class="clue-item">
-            <a href="#" onclick="window.open('https://drive.google.com/file/d/1SsrzHAkFc203YjgXpQ2tH9E78EiyjkB9/view?usp=drive_link')">Clue 9</a>
-            <span class="checkbox" id="checkbox-clue9"></span>
-            <button onclick="openQRScanner('clue9')">Scan QR</button>
-          </div>
-        `;
+            <a href="#" onclick="window.open('${getClueLink(id)}')">${qrValues[id]}</a>
+            <span class="checkbox" id="checkbox-${id}"></span>
+            <button onclick="openQRScanner('${id}')">Scan QR</button>
+          </div>`).join('');
         cluesDiv.style.display = 'flex';
-        cluesDiv.style.flexDirection = 'column';
-        cluesDiv.style.gap = '10px';
       } else {
         alert("Wrong passkey.");
       }
     }
-  
+
+    function getClueLink(id) {
+      return {
+        clue6: 'https://drive.google.com/file/d/1k11sKtLTR6KuNBzpjPnv6j0W2einnbQt/view?usp=drive_link',
+        clue7: 'https://drive.google.com/file/d/13dJem8AVPzVie4o7ho90RJ5dSTk5VJp7/view?usp=drive_link',
+        clue8: 'https://drive.google.com/file/d/181wBLzg-fE2--SYkV5oBcNoNb7qZ8pKs/view?usp=drive_link',
+        clue9: 'https://drive.google.com/file/d/1SsrzHAkFc203YjgXpQ2tH9E78EiyjkB9/view?usp=drive_link'
+      }[id];
+    }
+
     function openQRScanner(clueId) {
-  currentClue = clueId;
-  const qrScannerEl = document.getElementById('qrScanner');
-  qrScannerEl.style.display = 'flex';
-  const videoEl = document.getElementById('qr-video');
-
-  // Stop any existing scanner before creating a new one
-  if (qrScanner) {
-    qrScanner.stop();
-    qrScanner.destroy();
-    qrScanner = null;
-  }
-
-  qrScanner = new QrScanner(
-    videoEl,
-    result => {
-      if (result) {
-        console.log("QR scanned: " + result.data); // helpful debug
-        processQRResult(result.data);
-      }
-    },
-    {
-      highlightScanRegion: true,
-      highlightCodeOutline: true
+      currentClue = clueId;
+      document.getElementById('qrScanner').style.display = 'flex';
+      if (qrScanner) qrScanner.destroy();
+      qrScanner = new QrScanner(document.getElementById('qr-video'), result => processQRResult(result.data));
+      qrScanner.start();
     }
-  );
 
-  qrScanner.start();
-}
+    function closeQRScanner() {
+      document.getElementById('qrScanner').style.display = 'none';
+      if (qrScanner) { qrScanner.stop(); qrScanner.destroy(); qrScanner = null; }
+    }
 
-  
-function closeQRScanner() {
-  const qrScannerEl = document.getElementById('qrScanner');
-  qrScannerEl.style.display = 'none';
-  if (qrScanner) {
-    qrScanner.stop();
-    qrScanner.destroy();
-    qrScanner = null;
-  }
-  currentClue = null;
-}
-  
-function processQRResult(result) {
-  if (currentClue && result.trim().toLowerCase() === qrValues[currentClue].toLowerCase()) {
-    completedClues[currentClue] = true;
-    document.getElementById(`checkbox-${currentClue}`).classList.add('checked');
-    closeQRScanner();
-    checkAllCluesCompleted();
-  } else {
-    alert("Invalid QR code! Make sure you're scanning the correct one.");
-  }
-}
-  
+    function processQRResult(result) {
+      if (currentClue && result.trim().toLowerCase() === qrValues[currentClue].toLowerCase()) {
+        completedClues[currentClue] = true;
+        document.getElementById(`checkbox-${currentClue}`).classList.add('checked');
+        closeQRScanner();
+        checkAllCluesCompleted();
+      } else {
+        alert("Invalid QR code! Try again.");
+      }
+    }
+
     function checkAllCluesCompleted() {
-      if (Object.values(completedClues).every(status => status === true)) {
-        const startTime = parseInt(localStorage.getItem('puzzleStartTime') || Date.now().toString());
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-        const secs = String(elapsed % 60).padStart(2, '0');
-  
-        document.getElementById('finalTime').textContent = `${mins} minutes ${secs} seconds`;
+      if (Object.values(completedClues).every(v => v)) {
         document.getElementById('congrats').style.display = 'flex';
+        document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
       }
     }
-  
-    document.addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && ['v', 'c', 'x'].includes(e.key.toLowerCase())) e.preventDefault();
-      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['i', 'c', 'j'].includes(e.key.toLowerCase()))) e.preventDefault();
-    });
-  
-    document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
   </script>
-  
 </body>
 </html>
