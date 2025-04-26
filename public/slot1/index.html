@@ -1,6 +1,7 @@
 <canvas id="matrix"></canvas>
 <div id="countdown" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 2em; color: lime; font-family: monospace; z-index: 1000;"></div>
 <div id="timer" style="position: fixed; bottom: 10px; left: 10px; font-size: 1.5em; color: lime; font-family: monospace; z-index: 1000;">00:00</div>
+<button id="resetTimer" style="position: fixed; top: 20px; right: 20px; opacity: 0; pointer-events: none; background: red; color: white; border: none; padding: 10px; font-weight: bold; z-index: 1000; border-radius: 5px;">RESET TIMER</button>
 
 <style>
   body {
@@ -16,78 +17,29 @@
   canvas {
     display: block;
   }
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(5, 50px);
-    grid-template-rows: repeat(6, 50px);
-    gap: 5px;
-    margin-bottom: 20px;
-  }
-  .cell {
-    width: 50px;
-    height: 50px;
-    border: 1px solid #ccc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.5em;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  .correct {
-    background-color: #6aaa64;
-    color: white;
-  }
-  .present {
-    background-color: #c9b458;
-    color: white;
-  }
-  .absent {
-    background-color: #787c7e;
-    color: white;
-  }
-  #keyboard {
-    display: grid;
-    grid-template-columns: repeat(10, auto);
-    gap: 5px;
-  }
-  .key {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: #eee;
-    text-align: center;
-    font-weight: bold;
-  }
-  .key:hover {
-    background-color: #ddd;
-  }
 </style>
 
 <script>
   const canvas = document.getElementById("matrix");
   const ctx = canvas.getContext("2d");
-  
+
   let fontSize = 30;
   let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
   let hex = "4D4F564945".split(""); // "MOVIE" in hex
-  
+
   let columns, drops, hexTimers;
-  
+
   function initMatrix() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  
+
     columns = Math.floor(canvas.width / fontSize);
     drops = new Array(columns).fill(1);
-  
+
     hexTimers = [];
-  
-    // Start spawning hex drops every 5 seconds
     setInterval(spawnHexDrop, 5000);
   }
-  
+
   function spawnHexDrop() {
     const randomColumn = Math.floor(Math.random() * columns);
     hexTimers.push({
@@ -96,64 +48,60 @@
       isVisible: true,
     });
   }
-  
+
   function drawMatrix() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
     ctx.font = `${fontSize}px monospace`;
-  
+
     ctx.fillStyle = "#0F0";
     ctx.shadowBlur = 0;
-  
+
     for (let i = 0; i < columns; i++) {
       const text = letters[Math.floor(Math.random() * letters.length)];
       const y = drops[i] * fontSize;
       ctx.fillText(text, i * fontSize, y);
-  
+
       if (y > canvas.height && Math.random() > 0.975) {
         drops[i] = 0;
       }
       drops[i]++;
     }
-  
-    // Draw hex drops
+
     ctx.fillStyle = "#AEFF17";
     ctx.shadowColor = "#AEFF17";
     ctx.shadowBlur = 20;
-  
+
     for (let i = hexTimers.length - 1; i >= 0; i--) {
       const timer = hexTimers[i];
       if (timer.isVisible) {
         const x = timer.column * fontSize;
         const y = timer.dropIndex * fontSize;
         const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-  
+
         if (y > 0 && y < canvas.height) {
           ctx.fillText(hex[currentCharIndex], x, y);
         }
-  
+
         timer.dropIndex++;
-  
+
         if (y > canvas.height + hex.length * fontSize) {
-          // Hex rain finished
           timer.isVisible = false;
           drops[timer.column] = 1;
-          hexTimers.splice(i, 1); // Remove it from active list
+          hexTimers.splice(i, 1);
         }
       }
     }
-  
+
     ctx.shadowBlur = 0;
   }
-  
+
   let matrixInterval;
-  
-  // Countdown
   const countdownEl = document.getElementById("countdown");
   let countdownNum = 3;
   countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-  
+
   const countdownInterval = setInterval(() => {
     countdownNum--;
     if (countdownNum > 0) {
@@ -164,14 +112,16 @@
       startMatrix();
     }
   }, 1000);
-  
+
   function startMatrix() {
-    localStorage.setItem("puzzleStartTime", Date.now().toString());
-  
+    if (!localStorage.getItem("puzzleStartTime")) {
+      localStorage.setItem("puzzleStartTime", Date.now().toString());
+    }
+
     let startTime = parseInt(localStorage.getItem("puzzleStartTime"));
     initMatrix();
     matrixInterval = setInterval(drawMatrix, 70);
-  
+
     const timerEl = document.getElementById("timer");
     setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -180,15 +130,13 @@
       timerEl.textContent = `${mins}:${secs}`;
     }, 1000);
   }
-  
-  // Handle window resize
+
   window.addEventListener("resize", () => {
     clearInterval(matrixInterval);
     initMatrix();
     matrixInterval = setInterval(drawMatrix, 70);
   });
-  
-  // --- Block DevTools, Right-click, Copy/Paste ---
+
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
     if (
@@ -202,5 +150,33 @@
   document.addEventListener("copy", (e) => e.preventDefault());
   document.addEventListener("cut", (e) => e.preventDefault());
   document.addEventListener("paste", (e) => e.preventDefault());
-  </script>
-  
+
+  // --- Timer continues even when user switches tab ---
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      // Nothing needed, timer works based on real time
+    }
+  });
+
+  // --- Hidden Reset Timer Button ---
+  const resetBtn = document.getElementById("resetTimer");
+
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === ";") { // CTRL + ;
+      resetBtn.style.opacity = 1;
+      resetBtn.style.pointerEvents = "auto";
+      resetBtn.style.background = "red";
+      resetBtn.textContent = "RESET TIMER";
+
+      setTimeout(() => {
+        resetBtn.style.opacity = 0;
+        resetBtn.style.pointerEvents = "none";
+      }, 5000);
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    localStorage.removeItem("puzzleStartTime");
+    location.reload();
+  });
+</script>
