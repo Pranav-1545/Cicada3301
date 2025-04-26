@@ -141,25 +141,28 @@
 
     
     activeHexInfo.forEach((timer, columnIndex) => {
-      if (!timer.hasCompleted) {
-        const x = columnIndex * fontSize;
-        const y = timer.dropIndex * fontSize;
-        const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-        if (y > 0 && y < canvas.height) {
-          ctx.fillStyle = "red";
-          ctx.fillText(hex[currentCharIndex], x, y);
-        }
+  if (!timer.hasCompleted) {
+    const x = columnIndex * fontSize;
+    const y = timer.dropIndex * fontSize;
+    const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
+    if (y > 0 && y < canvas.height) {
+      ctx.fillStyle = "red";
+      ctx.shadowColor = "red";         // 🌟 Add this
+      ctx.shadowBlur = 10;              // 🌟 And this for glow effect
+      ctx.fillText(hex[currentCharIndex], x, y);
+      ctx.shadowBlur = 0;               // ✨ Reset shadow after drawing
+    }
 
-        timer.dropIndex++;
+    timer.dropIndex++;
 
-        if (y > canvas.height + hex.length * fontSize) {
-          timer.hasCompleted = true;
-          timer.isVisible = false;
-          drops[columnIndex] = 1;
-        }
-      }
-    });
+    if (y > canvas.height + hex.length * fontSize) {
+      timer.hasCompleted = true;
+      timer.isVisible = false;
+      drops[columnIndex] = 1;
+    }
   }
+});
+
 
   let matrixInterval;
 
