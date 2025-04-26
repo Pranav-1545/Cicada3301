@@ -32,7 +32,7 @@ const minSpacing = 5;
 let lastHexColumn = -minSpacing;
 
 for (let i = 0; i < columns; i++) {
-  if (Math.random() < 0.2 && i - lastHexColumn >= minSpacing) {
+  if (Math.random() < 0.6 && i - lastHexColumn >= minSpacing) {
     hexColumns.push(i);
     lastHexColumn = i;
     i += minSpacing - 1;
