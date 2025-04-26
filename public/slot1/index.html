@@ -117,11 +117,6 @@ let timerInterval;
 let startTime = null;
 
 function startMatrix() {
-  if (!localStorage.getItem('puzzleStartTime')) {
-    localStorage.setItem('puzzleStartTime', Date.now().toString());
-  }
-  startTime = parseInt(localStorage.getItem('puzzleStartTime'));
-
   matrixInterval = setInterval(drawMatrix, 70);
 
   const timerEl = document.getElementById("timer");
@@ -133,7 +128,18 @@ function startMatrix() {
   }, 1000);
 }
 
-// Countdown before matrix starts
+// --- TIMER RESET LOGIC ---
+function initializeTimer() {
+  const existingStartTime = localStorage.getItem('puzzleStartTime');
+  if (!existingStartTime) {
+    localStorage.setItem('puzzleStartTime', Date.now().toString());
+  }
+  startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
+}
+
+// Always reset the timer if page was just loaded
+localStorage.removeItem('puzzleStartTime');
+
 const countdownEl = document.getElementById("countdown");
 let countdownNum = 3;
 countdownEl.textContent = `Timer starting in ${countdownNum}...`;
@@ -145,13 +151,14 @@ const countdownInterval = setInterval(() => {
   } else {
     clearInterval(countdownInterval);
     countdownEl.textContent = "";
+
+    initializeTimer();
     startMatrix();
   }
 }, 1000);
 
 window.addEventListener("resize", () => {
-  // Optional: reload the page if resized, or handle resize smoothly
-  // location.reload();
+  // Optional: reload page on resize if needed
 });
 
 // --- Block DevTools, Right-click, Copy/Paste ---
