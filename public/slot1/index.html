@@ -15,164 +15,146 @@
 </style>
 
 <script>
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+  const canvas = document.getElementById("matrix");
+  const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-const fontSize = 30;
-const columns = Math.floor(canvas.width / fontSize);
-const drops = new Array(columns).fill(1);
+  const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
+  const hex = "4D4F564945".split(""); // "MOVIE" in hex
+  const fontSize = 30;
+  const columns = Math.floor(canvas.width / fontSize);
+  const drops = new Array(columns).fill(1);
 
-const hex = "4D4F564945".split(""); // "MOVIE"
-const hexColumns = [];
-const minSpacing = 5;
-let lastHexColumn = -minSpacing;
+  // Setup Red Hex Drops
+  const hexTimers = Array.from({ length: 15 }, () => ({
+    dropIndex: 0,
+    columnIndex: Math.floor(Math.random() * columns),
+    isVisible: false,
+    hasCompleted: false,
+    nextAppearanceTime: performance.now() + Math.random() * 4000,
+    cooldown: 3000 + Math.random() * 3000,
+  }));
 
-for (let i = 0; i < columns; i++) {
-  if (Math.random() < 0.6 && i - lastHexColumn >= minSpacing) {
-    hexColumns.push(i);
-    lastHexColumn = i;
-    i += minSpacing - 1;
-  }
-}
+  function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-const hexTimers = hexColumns.map(() => ({
-  dropIndex: 0,
-  isVisible: false,
-  hasCompleted: false,
-  nextAppearanceTime: performance.now() + Math.random() * 3000,
-  cooldown: 3000 + Math.random() * 2000,
-}));
+    ctx.font = `${fontSize}px monospace`;
+    const now = performance.now();
 
-function drawMatrix() {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.font = `${fontSize}px monospace`;
-  const now = performance.now();
-
-  hexTimers.forEach((timer) => {
-    if (!timer.isVisible && now >= timer.nextAppearanceTime) {
-      timer.isVisible = true;
-      timer.position = -hex.length * fontSize;
-    }
-  });
-
-  const activeHexInfo = new Map();
-  for (let k = 0; k < hexColumns.length; k++) {
-    const timer = hexTimers[k];
-    if (timer.isVisible) {
-      activeHexInfo.set(hexColumns[k], timer);
-    }
-  }
-
-  ctx.fillStyle = "#0F0";
-  for (let i = 0; i < columns; i++) {
-    const activeTimer = activeHexInfo.get(i);
-
-    if (activeTimer) {
-      drops[i] = 0;
-      continue;
-    }
-
-    const text = letters[Math.floor(Math.random() * letters.length)];
-    const y = drops[i] * fontSize;
-    ctx.fillText(text, i * fontSize, y);
-
-    if (y > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
-    }
-    drops[i] += 1;
-  }
-
-  activeHexInfo.forEach((timer, columnIndex) => {
-    if (!timer.hasCompleted) {
-      const x = columnIndex * fontSize;
-      const y = timer.dropIndex * fontSize;
-      const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-      if (y > 0 && y < canvas.height) {
-        ctx.fillStyle = "red";
-        ctx.shadowColor = "red";
-        ctx.shadowBlur = 10;
-        ctx.fillText(hex[currentCharIndex], x, y);
-        ctx.shadowBlur = 0;
+    // Activate new red hex drops
+    hexTimers.forEach(timer => {
+      if (!timer.isVisible && now >= timer.nextAppearanceTime) {
+        timer.isVisible = true;
+        timer.dropIndex = 0;
+        timer.columnIndex = Math.floor(Math.random() * columns);
       }
+    });
 
-      timer.dropIndex++;
-
-      if (y > canvas.height + hex.length * fontSize) {
-        timer.hasCompleted = true;
-        timer.isVisible = false;
-        drops[columnIndex] = 1;
+    const activeHexInfo = new Map();
+    hexTimers.forEach(timer => {
+      if (timer.isVisible) {
+        activeHexInfo.set(timer.columnIndex, timer);
       }
+    });
+
+    ctx.fillStyle = "#0F0";
+    for (let i = 0; i < columns; i++) {
+      if (activeHexInfo.has(i)) {
+        continue; // Red hex will handle this column
+      }
+      const text = letters[Math.floor(Math.random() * letters.length)];
+      const y = drops[i] * fontSize;
+      ctx.fillText(text, i * fontSize, y);
+
+      if (y > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
     }
-  });
-}
 
-let matrixInterval;
-let timerInterval;
-let startTime = null;
+    // Draw red hex codes
+    activeHexInfo.forEach((timer, columnIndex) => {
+      if (!timer.hasCompleted) {
+        const x = columnIndex * fontSize;
+        const y = timer.dropIndex * fontSize;
+        const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
 
-function startMatrix() {
-  matrixInterval = setInterval(drawMatrix, 70);
+        if (y > 0 && y < canvas.height) {
+          ctx.fillStyle = "red";
+          ctx.shadowColor = "red";
+          ctx.shadowBlur = 10;
+          ctx.fillText(hex[currentCharIndex], x, y);
+          ctx.shadowBlur = 0;
+        }
 
-  const timerEl = document.getElementById("timer");
-  timerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-    const secs = String(elapsed % 60).padStart(2, '0');
-    timerEl.textContent = `${mins}:${secs}`;
+        timer.dropIndex++;
+
+        if (y > canvas.height + hex.length * fontSize) {
+          timer.hasCompleted = true;
+          timer.isVisible = false;
+          timer.nextAppearanceTime = now + timer.cooldown;
+          timer.hasCompleted = false;
+          drops[columnIndex] = 1;
+        }
+      }
+    });
+  }
+
+  // Countdown before starting matrix
+  const countdownEl = document.getElementById("countdown");
+  let countdownNum = 3;
+  countdownEl.textContent = `Starting in ${countdownNum}...`;
+
+  const countdownInterval = setInterval(() => {
+    countdownNum--;
+    if (countdownNum > 0) {
+      countdownEl.textContent = `Starting in ${countdownNum}...`;
+    } else {
+      clearInterval(countdownInterval);
+      countdownEl.textContent = "";
+      startMatrix();
+    }
   }, 1000);
-}
 
-// --- TIMER RESET LOGIC ---
-function initializeTimer() {
-  const existingStartTime = localStorage.getItem('puzzleStartTime');
-  if (!existingStartTime) {
-    localStorage.setItem('puzzleStartTime', Date.now().toString());
+  function startMatrix() {
+    // Start fresh timer only ONCE when user first visits
+    if (!localStorage.getItem('puzzleStartTime')) {
+      localStorage.setItem('puzzleStartTime', Date.now().toString());
+    }
+
+    const startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
+
+    setInterval(drawMatrix, 50); // faster draw, smoother
+
+    const timerEl = document.getElementById("timer");
+    setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const secs = String(elapsed % 60).padStart(2, '0');
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
   }
-  startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
-}
 
-// Always reset the timer if page was just loaded
-localStorage.removeItem('puzzleStartTime');
+  window.addEventListener("resize", () => {
+    location.reload(); // refresh hard when resized
+  });
 
-const countdownEl = document.getElementById("countdown");
-let countdownNum = 3;
-countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-
-const countdownInterval = setInterval(() => {
-  countdownNum--;
-  if (countdownNum > 0) {
-    countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-  } else {
-    clearInterval(countdownInterval);
-    countdownEl.textContent = "";
-
-    initializeTimer();
-    startMatrix();
-  }
-}, 1000);
-
-window.addEventListener("resize", () => {
-  // Optional: reload page on resize if needed
-});
-
-// --- Block DevTools, Right-click, Copy/Paste ---
-document.addEventListener("contextmenu", (e) => e.preventDefault());
-document.addEventListener("keydown", (e) => {
-  if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
-    (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
-  ) {
-    e.preventDefault();
-  }
-});
-document.addEventListener("copy", (e) => e.preventDefault());
-document.addEventListener("cut", (e) => e.preventDefault());
-document.addEventListener("paste", (e) => e.preventDefault());
+  // Block right-click and dev tools
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("keydown", e => {
+    if (
+      e.key === "F12" ||
+      (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
+      (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
+    ) {
+      e.preventDefault();
+    }
+  });
+  document.addEventListener("copy", e => e.preventDefault());
+  document.addEventListener("cut", e => e.preventDefault());
+  document.addEventListener("paste", e => e.preventDefault());
 </script>
