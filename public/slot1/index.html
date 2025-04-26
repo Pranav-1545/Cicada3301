@@ -28,6 +28,8 @@ const columns = Math.floor(canvas.width / fontSize);
 const drops = new Array(columns).fill(1);
 
 let redHexDrops = [];
+let lastTimestamp = 0;
+let animationFrameId;
 
 function createHexDrop() {
   return {
@@ -38,14 +40,17 @@ function createHexDrop() {
   };
 }
 
-function spawnHexDrop() {
-  redHexDrops.push(createHexDrop());
-}
+// We'll handle hex spawning in the animation loop instead
+let lastHexSpawnTime = 0;
+const hexSpawnInterval = 5000; // 5 seconds between spawns
 
-// Start spawning hex codes continuously
-setInterval(spawnHexDrop, 1000); // one new hex every 1 second
+function drawMatrix(timestamp) {
+  // Spawn hex drops every 5 seconds
+  if (!lastHexSpawnTime || timestamp - lastHexSpawnTime >= hexSpawnInterval) {
+    redHexDrops.push(createHexDrop());
+    lastHexSpawnTime = timestamp;
+  }
 
-function drawMatrix() {
   ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -85,6 +90,9 @@ function drawMatrix() {
 
   // Clean up dead drops
   redHexDrops = redHexDrops.filter(drop => drop.alive);
+  
+  // Request next frame
+  animationFrameId = requestAnimationFrame(drawMatrix);
 }
 
 // Countdown first
@@ -104,26 +112,59 @@ const countdownInterval = setInterval(() => {
 }, 1000);
 
 function startMatrix() {
+  // Get or set the start time from localStorage
   if (!localStorage.getItem('puzzleStartTime')) {
     localStorage.setItem('puzzleStartTime', Date.now().toString());
   }
+  
+  // Start the animation loop
+  animationFrameId = requestAnimationFrame(drawMatrix);
+  
+  // Start the timer
+  updateTimer();
+}
 
+function updateTimer() {
   const startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
-
-  setInterval(drawMatrix, 50);
-
   const timerEl = document.getElementById("timer");
-  setInterval(() => {
+  
+  function updateTimerDisplay() {
     const now = Date.now();
     const elapsed = Math.floor((now - startTime) / 1000);
     const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
     const secs = String(elapsed % 60).padStart(2, '0');
     timerEl.textContent = `${mins}:${secs}`;
-  }, 1000);
+  }
+  
+  // Update immediately
+  updateTimerDisplay();
+  
+  // Then update every second
+  setInterval(updateTimerDisplay, 1000);
 }
 
 window.addEventListener("resize", () => {
+  // Stop animation before reload
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
   location.reload();
+});
+
+// Use Page Visibility API to ensure timer continues even when tab is not active
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // Restart animation if page becomes visible again
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(drawMatrix);
+    }
+  } else {
+    // Stop animation when page is hidden to save resources
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
 });
 
 // Block Inspect Element
