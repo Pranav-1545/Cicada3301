@@ -114,30 +114,26 @@
   }, 1000);
 
   function startMatrix() {
-    let startTime;
+  const now = Date.now();
+  let startTime = parseInt(localStorage.getItem("puzzleStartTime"), 10);
 
-// Check if a fresh session
-if (!sessionStorage.getItem("hasVisited")) {
-  sessionStorage.setItem("hasVisited", "true");
-  // Fresh first load → set new start time
-  startTime = Date.now();
-  localStorage.setItem("puzzleStartTime", startTime.toString());
-} else {
-  // Subsequent reloads in same tab → use stored time
-  startTime = parseInt(localStorage.getItem("puzzleStartTime"));
-}
-
-    initMatrix();
-    matrixInterval = setInterval(drawMatrix, 70);
-
-    const timerEl = document.getElementById("timer");
-    setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
-      const secs = String(elapsed % 60).padStart(2, "0");
-      timerEl.textContent = `${mins}:${secs}`;
-    }, 1000);
+  // If no startTime saved, or invalid, or elapsed time > 10 minutes → reset
+  if (!startTime || isNaN(startTime) || (now - startTime > 10 * 60 * 1000)) {
+    startTime = now;
+    localStorage.setItem("puzzleStartTime", startTime.toString());
   }
+
+  initMatrix();
+  matrixInterval = setInterval(drawMatrix, 70);
+
+  const timerEl = document.getElementById("timer");
+  setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const secs = String(elapsed % 60).padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
+  }, 1000);
+}
 
   window.addEventListener("resize", () => {
     clearInterval(matrixInterval);
