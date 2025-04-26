@@ -15,22 +15,45 @@
 </style>
 
 <script>
+// Get elements
 const canvas = document.getElementById("matrix");
 const ctx = canvas.getContext("2d");
+const countdownEl = document.getElementById("countdown");
+const timerEl = document.getElementById("timer");
 
+// Set canvas dimensions
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Matrix characters and settings
 const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
 const hex = "4D4F564945".split(""); // "MOVIE" in hex
 const fontSize = 30;
 const columns = Math.floor(canvas.width / fontSize);
 const drops = new Array(columns).fill(1);
 
+// Animation control variables
 let redHexDrops = [];
-let lastTimestamp = 0;
-let animationFrameId;
+let animationFrameId = null;
+let lastHexSpawnTime = 0;
+const HEX_SPAWN_INTERVAL = 5000; // 5 seconds
 
+// Timer variables
+let timerInterval;
+let startTime;
+
+// Initialize or get the start time from localStorage
+function initStartTime() {
+  const savedTime = localStorage.getItem('puzzleStartTime');
+  if (!savedTime) {
+    startTime = Date.now();
+    localStorage.setItem('puzzleStartTime', startTime.toString());
+  } else {
+    startTime = parseInt(savedTime, 10);
+  }
+}
+
+// Create a new hex drop
 function createHexDrop() {
   return {
     x: Math.floor(Math.random() * columns),
@@ -40,20 +63,19 @@ function createHexDrop() {
   };
 }
 
-// We'll handle hex spawning in the animation loop instead
-let lastHexSpawnTime = 0;
-const hexSpawnInterval = 5000; // 5 seconds between spawns
-
+// Main animation function
 function drawMatrix(timestamp) {
   // Spawn hex drops every 5 seconds
-  if (!lastHexSpawnTime || timestamp - lastHexSpawnTime >= hexSpawnInterval) {
+  if (timestamp - lastHexSpawnTime >= HEX_SPAWN_INTERVAL) {
     redHexDrops.push(createHexDrop());
     lastHexSpawnTime = timestamp;
   }
 
+  // Fade effect
   ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Draw green matrix characters
   ctx.font = `${fontSize}px monospace`;
   ctx.fillStyle = "#0F0";
 
@@ -83,7 +105,7 @@ function drawMatrix(timestamp) {
       drop.charIndex++;
 
       if (y > canvas.height) {
-        drop.alive = false; // remove it once it goes off screen
+        drop.alive = false;
       }
     }
   });
@@ -91,83 +113,88 @@ function drawMatrix(timestamp) {
   // Clean up dead drops
   redHexDrops = redHexDrops.filter(drop => drop.alive);
   
-  // Request next frame
+  // Continue animation loop
   animationFrameId = requestAnimationFrame(drawMatrix);
 }
 
-// Countdown first
-const countdownEl = document.getElementById("countdown");
-let countdownNum = 3;
-countdownEl.textContent = `Starting in ${countdownNum}...`;
+// Update timer display
+function updateTimerDisplay() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const secs = String(elapsed % 60).padStart(2, '0');
+  timerEl.textContent = `${mins}:${secs}`;
+}
 
-const countdownInterval = setInterval(() => {
-  countdownNum--;
-  if (countdownNum > 0) {
-    countdownEl.textContent = `Starting in ${countdownNum}...`;
-  } else {
-    clearInterval(countdownInterval);
-    countdownEl.textContent = "";
-    startMatrix();
-  }
-}, 1000);
+// Start countdown and matrix animation
+function startCountdown() {
+  let countdownNum = 3;
+  countdownEl.textContent = `Starting in ${countdownNum}...`;
 
+  const countdownInterval = setInterval(() => {
+    countdownNum--;
+    if (countdownNum > 0) {
+      countdownEl.textContent = `Starting in ${countdownNum}...`;
+    } else {
+      clearInterval(countdownInterval);
+      countdownEl.textContent = "";
+      startMatrix();
+    }
+  }, 1000);
+}
+
+// Start the matrix animation and timer
 function startMatrix() {
-  // Get or set the start time from localStorage
-  if (!localStorage.getItem('puzzleStartTime')) {
-    localStorage.setItem('puzzleStartTime', Date.now().toString());
-  }
+  // Initialize timer
+  initStartTime();
   
-  // Start the animation loop
-  animationFrameId = requestAnimationFrame(drawMatrix);
-  
-  // Start the timer
-  updateTimer();
-}
-
-function updateTimer() {
-  const startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
-  const timerEl = document.getElementById("timer");
-  
-  function updateTimerDisplay() {
-    const now = Date.now();
-    const elapsed = Math.floor((now - startTime) / 1000);
-    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-    const secs = String(elapsed % 60).padStart(2, '0');
-    timerEl.textContent = `${mins}:${secs}`;
-  }
-  
-  // Update immediately
+  // Update timer display immediately and then every second
   updateTimerDisplay();
+  timerInterval = setInterval(updateTimerDisplay, 1000);
   
-  // Then update every second
-  setInterval(updateTimerDisplay, 1000);
+  // Start animation
+  lastHexSpawnTime = performance.now();
+  animationFrameId = requestAnimationFrame(drawMatrix);
 }
 
-window.addEventListener("resize", () => {
-  // Stop animation before reload
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-  }
-  location.reload();
-});
-
-// Use Page Visibility API to ensure timer continues even when tab is not active
+// Handle page visibility changes
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    // Restart animation if page becomes visible again
+    // Resume animation
     if (!animationFrameId) {
+      lastHexSpawnTime = performance.now(); // Reset spawn timer on resume
       animationFrameId = requestAnimationFrame(drawMatrix);
     }
+    
+    // Make sure timer is running
+    if (!timerInterval) {
+      updateTimerDisplay();
+      timerInterval = setInterval(updateTimerDisplay, 1000);
+    }
   } else {
-    // Stop animation when page is hidden to save resources
+    // Pause animation but keep timer running
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
+    
+    // We don't cancel the timer interval, so it keeps running in background
   }
 });
 
-// Block Inspect Element
+// Handle window resize
+window.addEventListener("resize", () => {
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+  
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+  
+  location.reload();
+});
+
+// Security measures
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.addEventListener("keydown", e => {
   if (
@@ -181,4 +208,7 @@ document.addEventListener("keydown", e => {
 document.addEventListener("copy", e => e.preventDefault());
 document.addEventListener("cut", e => e.preventDefault());
 document.addEventListener("paste", e => e.preventDefault());
+
+// Start the countdown
+startCountdown();
 </script>
