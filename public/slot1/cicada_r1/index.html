@@ -359,7 +359,7 @@
       currentClue = clueId;
       document.getElementById('qrScanner').style.display = 'flex';
       if (qrScanner) qrScanner.destroy();
-      qrScanner = new QrScanner(document.getElementById('qr-video'), result => processQRResult(result.data));
+      qrScanner = new QrScanner(document.getElementById('qr-video'), result => processQRResult(result));
       qrScanner.start();
     }
 
