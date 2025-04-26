@@ -7,7 +7,7 @@
     margin: 0;
     background: black;
     overflow: hidden;
-    font-family: sans-serif;
+    font-family: monospace;
   }
   canvas {
     display: block;
@@ -15,139 +15,129 @@
 </style>
 
 <script>
-  const canvas = document.getElementById("matrix");
-  const ctx = canvas.getContext("2d");
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-  const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-  const hex = "4D4F564945".split(""); // "MOVIE" in hex
-  const fontSize = 30;
-  const columns = Math.floor(canvas.width / fontSize);
-  const drops = new Array(columns).fill(1);
+const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
+const hex = "4D4F564945".split(""); // "MOVIE" in hex
+const fontSize = 30;
+const columns = Math.floor(canvas.width / fontSize);
+const drops = new Array(columns).fill(1);
 
-  const activeHexTimers = [];
+let redHexDrops = [];
 
-  function createHexDrop() {
-    return {
-      dropIndex: 0,
-      columnIndex: Math.floor(Math.random() * columns),
-      isVisible: true,
-      hasCompleted: false,
-    };
-  }
+function createHexDrop() {
+  return {
+    x: Math.floor(Math.random() * columns),
+    y: 0,
+    charIndex: 0,
+    alive: true,
+  };
+}
 
-  // Start with multiple red hex codes appearing randomly
-  for (let i = 0; i < 20; i++) {
-    setTimeout(() => {
-      activeHexTimers.push(createHexDrop());
-    }, Math.random() * 5000);
-  }
+function spawnHexDrop() {
+  redHexDrops.push(createHexDrop());
+}
 
-  function spawnHexRandomly() {
-    setTimeout(() => {
-      activeHexTimers.push(createHexDrop());
-      spawnHexRandomly(); // keep spawning forever
-    }, 2000 + Math.random() * 3000); // every 2-5 seconds randomly
-  }
+// Start spawning hex codes continuously
+setInterval(spawnHexDrop, 1000); // one new hex every 1 second
 
-  spawnHexRandomly();
+function drawMatrix() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `${fontSize}px monospace`;
+  ctx.fillStyle = "#0F0";
 
-    ctx.font = `${fontSize}px monospace`;
+  for (let i = 0; i < columns; i++) {
+    const text = letters[Math.floor(Math.random() * letters.length)];
+    const y = drops[i] * fontSize;
+    ctx.fillText(text, i * fontSize, y);
 
-    ctx.fillStyle = "#0F0";
-    for (let i = 0; i < columns; i++) {
-      const text = letters[Math.floor(Math.random() * letters.length)];
-      const y = drops[i] * fontSize;
-      ctx.fillText(text, i * fontSize, y);
-
-      if (y > canvas.height && Math.random() > 0.975) {
-        drops[i] = 0;
-      }
-      drops[i]++;
+    if (y > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
     }
-
-    // Draw red hex drops
-    activeHexTimers.forEach(timer => {
-      if (timer.isVisible && !timer.hasCompleted) {
-        const x = timer.columnIndex * fontSize;
-        const y = timer.dropIndex * fontSize;
-        const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-
-        if (y > 0 && y < canvas.height) {
-          ctx.fillStyle = "red";
-          ctx.shadowColor = "red";
-          ctx.shadowBlur = 10;
-          ctx.fillText(hex[currentCharIndex], x, y);
-          ctx.shadowBlur = 0;
-        }
-
-        timer.dropIndex++;
-
-        if (y > canvas.height + hex.length * fontSize) {
-          timer.hasCompleted = true;
-          timer.isVisible = false;
-        }
-      }
-    });
+    drops[i]++;
   }
 
-  // Countdown first
-  const countdownEl = document.getElementById("countdown");
-  let countdownNum = 3;
-  countdownEl.textContent = `Starting in ${countdownNum}...`;
+  // Draw red hex drops
+  redHexDrops.forEach(drop => {
+    if (drop.alive) {
+      const x = drop.x * fontSize;
+      const y = drop.y * fontSize;
+      ctx.fillStyle = "red";
+      ctx.shadowColor = "red";
+      ctx.shadowBlur = 10;
+      ctx.fillText(hex[drop.charIndex % hex.length], x, y);
+      ctx.shadowBlur = 0;
 
-  const countdownInterval = setInterval(() => {
-    countdownNum--;
-    if (countdownNum > 0) {
-      countdownEl.textContent = `Starting in ${countdownNum}...`;
-    } else {
-      clearInterval(countdownInterval);
-      countdownEl.textContent = "";
-      startMatrix();
+      drop.y += 0.5; // control speed
+      drop.charIndex++;
+
+      if (y > canvas.height) {
+        drop.alive = false; // remove it once it goes off screen
+      }
     }
+  });
+
+  // Clean up dead drops
+  redHexDrops = redHexDrops.filter(drop => drop.alive);
+}
+
+// Countdown first
+const countdownEl = document.getElementById("countdown");
+let countdownNum = 3;
+countdownEl.textContent = `Starting in ${countdownNum}...`;
+
+const countdownInterval = setInterval(() => {
+  countdownNum--;
+  if (countdownNum > 0) {
+    countdownEl.textContent = `Starting in ${countdownNum}...`;
+  } else {
+    clearInterval(countdownInterval);
+    countdownEl.textContent = "";
+    startMatrix();
+  }
+}, 1000);
+
+function startMatrix() {
+  if (!localStorage.getItem('puzzleStartTime')) {
+    localStorage.setItem('puzzleStartTime', Date.now().toString());
+  }
+
+  const startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
+
+  setInterval(drawMatrix, 50);
+
+  const timerEl = document.getElementById("timer");
+  setInterval(() => {
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTime) / 1000);
+    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const secs = String(elapsed % 60).padStart(2, '0');
+    timerEl.textContent = `${mins}:${secs}`;
   }, 1000);
+}
 
-  function startMatrix() {
-    // Start fresh timer only ONCE when user first visits
-    if (!localStorage.getItem('puzzleStartTime')) {
-      localStorage.setItem('puzzleStartTime', Date.now().toString());
-    }
+window.addEventListener("resize", () => {
+  location.reload();
+});
 
-    const startTime = parseInt(localStorage.getItem('puzzleStartTime'), 10);
-
-    setInterval(drawMatrix, 50); // smoother animation
-
-    const timerEl = document.getElementById("timer");
-    setInterval(() => {
-      const now = Date.now();
-      const elapsed = Math.floor((now - startTime) / 1000);
-      const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-      const secs = String(elapsed % 60).padStart(2, '0');
-      timerEl.textContent = `${mins}:${secs}`;
-    }, 1000);
+// Block Inspect Element
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("keydown", e => {
+  if (
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
+    (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
+  ) {
+    e.preventDefault();
   }
-
-  window.addEventListener("resize", () => {
-    location.reload();
-  });
-
-  document.addEventListener("contextmenu", e => e.preventDefault());
-  document.addEventListener("keydown", e => {
-    if (
-      e.key === "F12" ||
-      (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
-      (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
-    ) {
-      e.preventDefault();
-    }
-  });
-  document.addEventListener("copy", e => e.preventDefault());
-  document.addEventListener("cut", e => e.preventDefault());
-  document.addEventListener("paste", e => e.preventDefault());
+});
+document.addEventListener("copy", e => e.preventDefault());
+document.addEventListener("cut", e => e.preventDefault());
+document.addEventListener("paste", e => e.preventDefault());
 </script>
