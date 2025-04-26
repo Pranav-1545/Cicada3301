@@ -1,4 +1,7 @@
 <canvas id="matrix"></canvas>
+<div id="countdown" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 2em; color: lime; font-family: monospace; z-index: 1000;"></div>
+<div id="timer" style="position: fixed; bottom: 10px; left: 10px; font-size: 1.5em; color: lime; font-family: monospace; z-index: 1000;">00:00</div>
+
 <style>
   body {
     margin: 0;
@@ -61,6 +64,7 @@
     background-color: #ddd;
   }
 </style>
+
 <script>
   const canvas = document.getElementById("matrix");
   const ctx = canvas.getContext("2d");
@@ -132,7 +136,7 @@
       if (y > canvas.height && Math.random() > 0.975) {
         drops[i] = 0;
       }
-      drops[i]+=1;
+      drops[i] += 1;
     }
 
     ctx.fillStyle = "#AEFF17";
@@ -156,7 +160,39 @@
     });
   }
 
-  setInterval(drawMatrix, 70);
+  let matrixInterval;
+
+  // Countdown effect
+  const countdownEl = document.getElementById("countdown");
+  let countdownNum = 3;
+  countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+
+  const countdownInterval = setInterval(() => {
+    countdownNum--;
+    if (countdownNum > 0) {
+      countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+    } else {
+      clearInterval(countdownInterval);
+      countdownEl.textContent = "";
+      startMatrix();
+    }
+  }, 1000);
+
+  function startMatrix() {
+    // Always reset the start time when loading this page
+    localStorage.setItem('puzzleStartTime', Date.now().toString());
+    
+    let startTime = parseInt(localStorage.getItem('puzzleStartTime'));
+    matrixInterval = setInterval(drawMatrix, 70);
+
+    const timerEl = document.getElementById("timer");
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const secs = String(elapsed % 60).padStart(2, '0');
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
 
   window.addEventListener("resize", () => {
     // Optional: location.reload(); for hard reset on resize
