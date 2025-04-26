@@ -114,11 +114,19 @@
   }, 1000);
 
   function startMatrix() {
-    if (!localStorage.getItem("puzzleStartTime")) {
-      localStorage.setItem("puzzleStartTime", Date.now().toString());
-    }
+    let startTime;
 
-    let startTime = parseInt(localStorage.getItem("puzzleStartTime"));
+// Check if a fresh session
+if (!sessionStorage.getItem("hasVisited")) {
+  sessionStorage.setItem("hasVisited", "true");
+  // Fresh first load → set new start time
+  startTime = Date.now();
+  localStorage.setItem("puzzleStartTime", startTime.toString());
+} else {
+  // Subsequent reloads in same tab → use stored time
+  startTime = parseInt(localStorage.getItem("puzzleStartTime"));
+}
+
     initMatrix();
     matrixInterval = setInterval(drawMatrix, 70);
 
