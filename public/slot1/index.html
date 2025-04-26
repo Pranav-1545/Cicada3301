@@ -139,13 +139,14 @@
       drops[i] += 1;
     }
 
-    ctx.fillStyle = "red";
+    
     activeHexInfo.forEach((timer, columnIndex) => {
       if (!timer.hasCompleted) {
         const x = columnIndex * fontSize;
         const y = timer.dropIndex * fontSize;
         const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
         if (y > 0 && y < canvas.height) {
+          ctx.fillStyle = "red";
           ctx.fillText(hex[currentCharIndex], x, y);
         }
 
