@@ -413,43 +413,57 @@
     }
   
     function openQRScanner(clueId) {
-      currentClue = clueId;
-      const qrScannerEl = document.getElementById('qrScanner');
-      qrScannerEl.style.display = 'flex';
-      const videoEl = document.getElementById('qr-video');
-  
-      if (!qrScanner) {
-        qrScanner = new QrScanner(
-          videoEl,
-          result => {
-            if (result) {
-              processQRResult(result.data);
-            }
-          }
-        );
+  currentClue = clueId;
+  const qrScannerEl = document.getElementById('qrScanner');
+  qrScannerEl.style.display = 'flex';
+  const videoEl = document.getElementById('qr-video');
+
+  // Stop any existing scanner before creating a new one
+  if (qrScanner) {
+    qrScanner.stop();
+    qrScanner.destroy();
+    qrScanner = null;
+  }
+
+  qrScanner = new QrScanner(
+    videoEl,
+    result => {
+      if (result) {
+        console.log("QR scanned: " + result.data); // helpful debug
+        processQRResult(result.data);
       }
-      qrScanner.start();
+    },
+    {
+      highlightScanRegion: true,
+      highlightCodeOutline: true
     }
+  );
+
+  qrScanner.start();
+}
+
   
-    function closeQRScanner() {
-      const qrScannerEl = document.getElementById('qrScanner');
-      qrScannerEl.style.display = 'none';
-      if (qrScanner) {
-        qrScanner.stop();
-      }
-      currentClue = null;
-    }
+function closeQRScanner() {
+  const qrScannerEl = document.getElementById('qrScanner');
+  qrScannerEl.style.display = 'none';
+  if (qrScanner) {
+    qrScanner.stop();
+    qrScanner.destroy();
+    qrScanner = null;
+  }
+  currentClue = null;
+}
   
-    function processQRResult(result) {
-      if (currentClue && result === qrValues[currentClue]) {
-        completedClues[currentClue] = true;
-        document.getElementById(`checkbox-${currentClue}`).classList.add('checked');
-        closeQRScanner();
-        checkAllCluesCompleted();
-      } else {
-        alert("Invalid QR code! Try again.");
-      }
-    }
+function processQRResult(result) {
+  if (currentClue && result.trim().toLowerCase() === qrValues[currentClue].toLowerCase()) {
+    completedClues[currentClue] = true;
+    document.getElementById(`checkbox-${currentClue}`).classList.add('checked');
+    closeQRScanner();
+    checkAllCluesCompleted();
+  } else {
+    alert("Invalid QR code! Make sure you're scanning the correct one.");
+  }
+}
   
     function checkAllCluesCompleted() {
       if (Object.values(completedClues).every(status => status === true)) {
