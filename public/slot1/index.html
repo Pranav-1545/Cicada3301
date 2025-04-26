@@ -50,6 +50,7 @@ function initStartTime() {
     localStorage.setItem('puzzleStartTime', startTime.toString());
   } else {
     startTime = parseInt(savedTime, 10);
+  }
 }
 
 // Create a new hex drop
@@ -66,13 +67,9 @@ function createHexDrop() {
 function drawMatrix(timestamp) {
   // Spawn hex drops every 5 seconds
   if (timestamp - lastHexSpawnTime >= HEX_SPAWN_INTERVAL) {
-  const hexDropsToAdd = Math.floor(Math.random() * 5) + 5; // 5 to 9 new drops
-  for (let i = 0; i < hexDropsToAdd; i++) {
     redHexDrops.push(createHexDrop());
+    lastHexSpawnTime = timestamp;
   }
-  lastHexSpawnTime = timestamp;
-}
- }
 
   // Fade effect
   ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
