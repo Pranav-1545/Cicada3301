@@ -1,4 +1,8 @@
 <canvas id="matrix"></canvas>
+<div id="countdown" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 2em; color: lime; font-family: monospace; z-index: 1000;"></div>
+<div id="timer" style="position: fixed; bottom: 10px; left: 10px; font-size: 1.5em; color: lime; font-family: monospace; z-index: 1000;">00:00</div>
+<button id="resetTimer" style="position: fixed; top: 20px; right: 20px; opacity: 0; pointer-events: none; background: red; color: white; border: none; padding: 10px; font-weight: bold; z-index: 1000; border-radius: 5px;">RESET TIMER</button>
+
 <style>
   body {
     margin: 0;
@@ -13,117 +17,48 @@
   canvas {
     display: block;
   }
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(5, 50px);
-    grid-template-rows: repeat(6, 50px);
-    gap: 5px;
-    margin-bottom: 20px;
-  }
-  .cell {
-    width: 50px;
-    height: 50px;
-    border: 1px solid #ccc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.5em;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  .correct {
-    background-color: #6aaa64;
-    color: white;
-  }
-  .present {
-    background-color: #c9b458;
-    color: white;
-  }
-  .absent {
-    background-color: #787c7e;
-    color: white;
-  }
-  #keyboard {
-    display: grid;
-    grid-template-columns: repeat(10, auto);
-    gap: 5px;
-  }
-  .key {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: #eee;
-    text-align: center;
-    font-weight: bold;
-  }
-  .key:hover {
-    background-color: #ddd;
-  }
 </style>
+
 <script>
   const canvas = document.getElementById("matrix");
   const ctx = canvas.getContext("2d");
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  let fontSize = 30;
+  let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
+  let hex = "143151156145155141".split(""); // "cinema" in octal
 
-  const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-  const fontSize = 30;
-  const columns = Math.floor(canvas.width / fontSize);
-  const drops = new Array(columns).fill(1);
+  let columns, drops, hexTimers;
 
-  const hex = "143151156145155141".split(""); // "cinema" in octal
-  const hexColumns = [];
-  const minSpacing = 5;
-  let lastHexColumn = -minSpacing;
+  function initMatrix() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-  for (let i = 0; i < columns; i++) {
-    if (Math.random() < 0.05 && i - lastHexColumn >= minSpacing) {
-      hexColumns.push(i);
-      lastHexColumn = i;
-      i += minSpacing - 1;
-    }
+    columns = Math.floor(canvas.width / fontSize);
+    drops = new Array(columns).fill(1);
+
+    hexTimers = [];
+    setInterval(spawnHexDrop, 5000);
   }
 
-  const hexTimers = hexColumns.map(() => ({
-    dropIndex: 0,
-    isVisible: false,
-    hasCompleted: false,
-    nextAppearanceTime: performance.now() + Math.random() * 8000,
-    cooldown: 8000 + Math.random() * 5000,
-  }));
+  function spawnHexDrop() {
+    const randomColumn = Math.floor(Math.random() * columns);
+    hexTimers.push({
+      column: randomColumn,
+      dropIndex: 0,
+      isVisible: true,
+    });
+  }
 
   function drawMatrix() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.font = `${fontSize}px monospace`;
-    const now = performance.now();
-
-    hexTimers.forEach((timer) => {
-      if (!timer.isVisible && now >= timer.nextAppearanceTime) {
-        timer.isVisible = true;
-        timer.position = -hex.length * fontSize;
-      }
-    });
-
-    const activeHexInfo = new Map();
-    for (let k = 0; k < hexColumns.length; k++) {
-      const timer = hexTimers[k];
-      if (timer.isVisible) {
-        activeHexInfo.set(hexColumns[k], timer);
-      }
-    }
 
     ctx.fillStyle = "#0F0";
-    for (let i = 0; i < columns; i++) {
-      const activeTimer = activeHexInfo.get(i);
-      if (activeTimer) {
-        drops[i] = 0;
-        continue;
-      }
+    ctx.shadowBlur = 0;
 
+    for (let i = 0; i < columns; i++) {
       const text = letters[Math.floor(Math.random() * letters.length)];
       const y = drops[i] * fontSize;
       ctx.fillText(text, i * fontSize, y);
@@ -131,38 +66,79 @@
       if (y > canvas.height && Math.random() > 0.975) {
         drops[i] = 0;
       }
-      drops[i]+=1;
+      drops[i]++;
     }
 
     ctx.fillStyle = "#AEFF17";
-    activeHexInfo.forEach((timer, columnIndex) => {
-      if (!timer.hasCompleted) {
-        const x = columnIndex * fontSize;
-        const y = timer.dropIndex * fontSize;
+    ctx.shadowColor = "#AEFF17";
+    ctx.shadowBlur = 60;
 
+    for (let i = hexTimers.length - 1; i >= 0; i--) {
+      const timer = hexTimers[i];
+      if (timer.isVisible) {
+        const x = timer.column * fontSize;
+        const y = timer.dropIndex * fontSize;
         const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
+
         if (y > 0 && y < canvas.height) {
+          ctx.font = `${fontSize*1}px monospace`; // <--- INCREASE octa SIZE
           ctx.fillText(hex[currentCharIndex], x, y);
+          ctx.font = `${fontSize}px monospace`; // <--- RESET FONT SIZE BACK
         }
 
         timer.dropIndex++;
 
         if (y > canvas.height + hex.length * fontSize) {
-          timer.hasCompleted = true;
           timer.isVisible = false;
-          drops[columnIndex] = 1;
+          drops[timer.column] = 1;
+          hexTimers.splice(i, 1);
         }
       }
-    });
+    }
+
+    ctx.shadowBlur = 0;
   }
 
-  setInterval(drawMatrix, 70);
+  let matrixInterval;
+  const countdownEl = document.getElementById("countdown");
+  let countdownNum = 3;
+  countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+
+  const countdownInterval = setInterval(() => {
+    countdownNum--;
+    if (countdownNum > 0) {
+      countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+    } else {
+      clearInterval(countdownInterval);
+      countdownEl.textContent = "";
+      startMatrix();
+    }
+  }, 1000);
+
+  function startMatrix() {
+    if (!localStorage.getItem("puzzleStartTime")) {
+      localStorage.setItem("puzzleStartTime", Date.now().toString());
+    }
+
+    let startTime = parseInt(localStorage.getItem("puzzleStartTime"));
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
+
+    const timerEl = document.getElementById("timer");
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const secs = String(elapsed % 60).padStart(2, "0");
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
 
   window.addEventListener("resize", () => {
-    // Optional: location.reload();
+    clearInterval(matrixInterval);
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
   });
 
-  // --- Block DevTools, Right-click, and Copy/Paste ---
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
     if (
@@ -176,4 +152,31 @@
   document.addEventListener("copy", (e) => e.preventDefault());
   document.addEventListener("cut", (e) => e.preventDefault());
   document.addEventListener("paste", (e) => e.preventDefault());
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      // Nothing needed, timer works based on real time
+    }
+  });
+
+  const resetBtn = document.getElementById("resetTimer");
+
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === ";") { // CTRL + ;
+      resetBtn.style.opacity = 1;
+      resetBtn.style.pointerEvents = "auto";
+      resetBtn.style.background = "red";
+      resetBtn.textContent = "RESET TIMER";
+
+      setTimeout(() => {
+        resetBtn.style.opacity = 0;
+        resetBtn.style.pointerEvents = "none";
+      }, 5000);
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    localStorage.removeItem("puzzleStartTime");
+    location.reload();
+  });
 </script>
