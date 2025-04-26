@@ -83,7 +83,7 @@
   let lastHexColumn = -minSpacing;
 
   for (let i = 0; i < columns; i++) {
-    if (Math.random() < 0.05 && i - lastHexColumn >= minSpacing) {
+    if (Math.random() < 0.2 && i - lastHexColumn >= minSpacing) {
       hexColumns.push(i);
       lastHexColumn = i;
       i += minSpacing - 1;
@@ -94,8 +94,10 @@
     dropIndex: 0,
     isVisible: false,
     hasCompleted: false,
-    nextAppearanceTime: performance.now() + Math.random() * 8000,
-    cooldown: 8000 + Math.random() * 5000,
+    nextAppearanceTime: performance.now() + Math.random() * 3000, // instead of 8000
+
+    cooldown: 3000 + Math.random() * 2000, // instead of 8000-13000
+
   }));
 
   function drawMatrix() {
