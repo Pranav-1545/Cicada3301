@@ -7,208 +7,200 @@
     margin: 0;
     background: black;
     overflow: hidden;
-    font-family: monospace;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
   }
   canvas {
     display: block;
   }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 5px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5em;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .correct {
+    background-color: #6aaa64;
+    color: white;
+  }
+  .present {
+    background-color: #c9b458;
+    color: white;
+  }
+  .absent {
+    background-color: #787c7e;
+    color: white;
+  }
+  #keyboard {
+    display: grid;
+    grid-template-columns: repeat(10, auto);
+    gap: 5px;
+  }
+  .key {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #eee;
+    text-align: center;
+    font-weight: bold;
+  }
+  .key:hover {
+    background-color: #ddd;
+  }
 </style>
 
 <script>
-// Get elements
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
-const countdownEl = document.getElementById("countdown");
-const timerEl = document.getElementById("timer");
-
-// Set canvas dimensions
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// Matrix characters and settings
-const letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-const hex = "4D4F564945".split(""); // "MOVIE" in hex
-const fontSize = 30;
-const columns = Math.floor(canvas.width / fontSize);
-const drops = new Array(columns).fill(1);
-
-// Animation control variables
-let redHexDrops = [];
-let animationFrameId = null;
-let lastHexSpawnTime = 0;
-const HEX_SPAWN_INTERVAL = 5000; // 5 seconds
-
-// Timer variables
-let timerInterval;
-let startTime;
-
-// Initialize or get the start time from localStorage
-function initStartTime() {
-  const savedTime = localStorage.getItem('puzzleStartTime');
-  if (!savedTime) {
-    startTime = Date.now();
-    localStorage.setItem('puzzleStartTime', startTime.toString());
-  } else {
-    startTime = parseInt(savedTime, 10);
+  const canvas = document.getElementById("matrix");
+  const ctx = canvas.getContext("2d");
+  
+  let fontSize = 30;
+  let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
+  let hex = "4D4F564945".split(""); // "MOVIE" in hex
+  
+  let columns, drops, hexTimers;
+  
+  function initMatrix() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  
+    columns = Math.floor(canvas.width / fontSize);
+    drops = new Array(columns).fill(1);
+  
+    hexTimers = [];
+  
+    // Start spawning hex drops every 5 seconds
+    setInterval(spawnHexDrop, 5000);
   }
-}
-
-// Create a new hex drop
-function createHexDrop() {
-  return {
-    x: Math.floor(Math.random() * columns),
-    y: 0,
-    charIndex: 0,
-    alive: true,
-  };
-}
-
-// Main animation function
-function drawMatrix(timestamp) {
-  // Spawn hex drops every 5 seconds
-  if (timestamp - lastHexSpawnTime >= HEX_SPAWN_INTERVAL) {
-    redHexDrops.push(createHexDrop());
-    lastHexSpawnTime = timestamp;
+  
+  function spawnHexDrop() {
+    const randomColumn = Math.floor(Math.random() * columns);
+    hexTimers.push({
+      column: randomColumn,
+      dropIndex: 0,
+      isVisible: true,
+    });
   }
-
-  // Fade effect
-  ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw green matrix characters
-  ctx.font = `${fontSize}px monospace`;
-  ctx.fillStyle = "#0F0";
-
-  for (let i = 0; i < columns; i++) {
-    const text = letters[Math.floor(Math.random() * letters.length)];
-    const y = drops[i] * fontSize;
-    ctx.fillText(text, i * fontSize, y);
-
-    if (y > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
+  
+  function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+    ctx.font = `${fontSize}px monospace`;
+  
+    ctx.fillStyle = "#0F0";
+    ctx.shadowBlur = 0;
+  
+    for (let i = 0; i < columns; i++) {
+      const text = letters[Math.floor(Math.random() * letters.length)];
+      const y = drops[i] * fontSize;
+      ctx.fillText(text, i * fontSize, y);
+  
+      if (y > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
     }
-    drops[i]++;
-  }
-
-  // Draw red hex drops
-  redHexDrops.forEach(drop => {
-    if (drop.alive) {
-      const x = drop.x * fontSize;
-      const y = drop.y * fontSize;
-      ctx.fillStyle = "red";
-      ctx.shadowColor = "red";
-      ctx.shadowBlur = 10;
-      ctx.fillText(hex[drop.charIndex % hex.length], x, y);
-      ctx.shadowBlur = 0;
-
-      drop.y += 0.5; // control speed
-      drop.charIndex++;
-
-      if (y > canvas.height) {
-        drop.alive = false;
+  
+    // Draw hex drops
+    ctx.fillStyle = "#AEFF17";
+    ctx.shadowColor = "#AEFF17";
+    ctx.shadowBlur = 20;
+  
+    for (let i = hexTimers.length - 1; i >= 0; i--) {
+      const timer = hexTimers[i];
+      if (timer.isVisible) {
+        const x = timer.column * fontSize;
+        const y = timer.dropIndex * fontSize;
+        const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
+  
+        if (y > 0 && y < canvas.height) {
+          ctx.fillText(hex[currentCharIndex], x, y);
+        }
+  
+        timer.dropIndex++;
+  
+        if (y > canvas.height + hex.length * fontSize) {
+          // Hex rain finished
+          timer.isVisible = false;
+          drops[timer.column] = 1;
+          hexTimers.splice(i, 1); // Remove it from active list
+        }
       }
     }
-  });
-
-  // Clean up dead drops
-  redHexDrops = redHexDrops.filter(drop => drop.alive);
   
-  // Continue animation loop
-  animationFrameId = requestAnimationFrame(drawMatrix);
-}
-
-// Update timer display
-function updateTimerDisplay() {
-  const elapsed = Math.floor((Date.now() - startTime) / 1000);
-  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const secs = String(elapsed % 60).padStart(2, '0');
-  timerEl.textContent = `${mins}:${secs}`;
-}
-
-// Start countdown and matrix animation
-function startCountdown() {
+    ctx.shadowBlur = 0;
+  }
+  
+  let matrixInterval;
+  
+  // Countdown
+  const countdownEl = document.getElementById("countdown");
   let countdownNum = 3;
-  countdownEl.textContent = `Starting in ${countdownNum}...`;
-
+  countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+  
   const countdownInterval = setInterval(() => {
     countdownNum--;
     if (countdownNum > 0) {
-      countdownEl.textContent = `Starting in ${countdownNum}...`;
+      countdownEl.textContent = `Timer starting in ${countdownNum}...`;
     } else {
       clearInterval(countdownInterval);
       countdownEl.textContent = "";
       startMatrix();
     }
   }, 1000);
-}
-
-// Start the matrix animation and timer
-function startMatrix() {
-  // Initialize timer
-  initStartTime();
   
-  // Update timer display immediately and then every second
-  updateTimerDisplay();
-  timerInterval = setInterval(updateTimerDisplay, 1000);
+  function startMatrix() {
+    localStorage.setItem("puzzleStartTime", Date.now().toString());
   
-  // Start animation
-  lastHexSpawnTime = performance.now();
-  animationFrameId = requestAnimationFrame(drawMatrix);
-}
-
-// Handle page visibility changes
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    // Resume animation
-    if (!animationFrameId) {
-      lastHexSpawnTime = performance.now(); // Reset spawn timer on resume
-      animationFrameId = requestAnimationFrame(drawMatrix);
+    let startTime = parseInt(localStorage.getItem("puzzleStartTime"));
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
+  
+    const timerEl = document.getElementById("timer");
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const secs = String(elapsed % 60).padStart(2, "0");
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
+  
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    clearInterval(matrixInterval);
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
+  });
+  
+  // --- Block DevTools, Right-click, Copy/Paste ---
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "F12" ||
+      (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
+      (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
+    ) {
+      e.preventDefault();
     }
-    
-    // Make sure timer is running
-    if (!timerInterval) {
-      updateTimerDisplay();
-      timerInterval = setInterval(updateTimerDisplay, 1000);
-    }
-  } else {
-    // Pause animation but keep timer running
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    
-    // We don't cancel the timer interval, so it keeps running in background
-  }
-});
-
-// Handle window resize
-window.addEventListener("resize", () => {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-  }
+  });
+  document.addEventListener("copy", (e) => e.preventDefault());
+  document.addEventListener("cut", (e) => e.preventDefault());
+  document.addEventListener("paste", (e) => e.preventDefault());
+  </script>
   
-  if (timerInterval) {
-    clearInterval(timerInterval);
-  }
-  
-  location.reload();
-});
-
-// Security measures
-document.addEventListener("contextmenu", e => e.preventDefault());
-document.addEventListener("keydown", e => {
-  if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
-    (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
-  ) {
-    e.preventDefault();
-  }
-});
-document.addEventListener("copy", e => e.preventDefault());
-document.addEventListener("cut", e => e.preventDefault());
-document.addEventListener("paste", e => e.preventDefault());
-
-// Start the countdown
-startCountdown();
-</script>
