@@ -19,55 +19,25 @@
 </style>
 
 <script>
+  // (Everything else like Matrix animation, expiry, and blocking right-click stays same)
+  
   const canvas = document.getElementById("matrix");
   const ctx = canvas.getContext("2d");
   
-  // (your previous variables here)
   let fontSize = 30;
   let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-  let hex = "4D4F564945".split("");
+  let hex = "4D4F564945".split(""); // "MOVIE" in hex
   
   let columns, drops, hexTimers;
   let matrixInterval;
   const EXPIRY_DURATION = 90 * 60 * 1000; // 90 minutes
-  let longPressTimer;
-  let isButtonVisible = false;
-  
-  // Create secret reset button (hidden by default)
-  const resetBtn = document.createElement('button');
-  resetBtn.textContent = "Reset Timer";
-  resetBtn.style.position = "fixed";
-  resetBtn.style.top = "10px";
-  resetBtn.style.right = "10px";
-  resetBtn.style.padding = "10px 20px";
-  resetBtn.style.background = "lime";
-  resetBtn.style.color = "black";
-  resetBtn.style.fontWeight = "bold";
-  resetBtn.style.border = "none";
-  resetBtn.style.borderRadius = "5px";
-  resetBtn.style.cursor = "pointer";
-  resetBtn.style.zIndex = 2000;
-  resetBtn.style.display = "none"; // hidden initially
-  document.body.appendChild(resetBtn);
-  
-  // Reset Timer Logic
-  function resetTimer() {
-    localStorage.removeItem("puzzleStartTime");
-    localStorage.removeItem("puzzleExpiryTime");
-    location.reload();
-  }
-  
-  // Button click resets the timer
-  resetBtn.addEventListener("click", resetTimer);
   
   function initMatrix() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  
     columns = Math.floor(canvas.width / fontSize);
     drops = new Array(columns).fill(1);
     hexTimers = [];
-  
     setInterval(spawnHexDrop, 5000);
   }
   
@@ -88,9 +58,7 @@
       const y = drops[i] * fontSize;
       ctx.fillText(text, i * fontSize, y);
   
-      if (y > canvas.height && Math.random() > 0.975) {
-        drops[i] = 0;
-      }
+      if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
       drops[i]++;
     }
   
@@ -104,13 +72,8 @@
         const x = timer.column * fontSize;
         const y = timer.dropIndex * fontSize;
         const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-  
-        if (y > 0 && y < canvas.height) {
-          ctx.fillText(hex[currentCharIndex], x, y);
-        }
-  
+        if (y > 0 && y < canvas.height) ctx.fillText(hex[currentCharIndex], x, y);
         timer.dropIndex++;
-  
         if (y > canvas.height + hex.length * fontSize) {
           timer.isVisible = false;
           drops[timer.column] = 1;
@@ -121,11 +84,9 @@
     ctx.shadowBlur = 0;
   }
   
-  // Countdown logic
   const countdownEl = document.getElementById("countdown");
   let countdownNum = 3;
   countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-  
   const countdownInterval = setInterval(() => {
     countdownNum--;
     if (countdownNum > 0) {
@@ -161,7 +122,13 @@
     }, 1000);
   }
   
-  // --- DevTools and basic protection ---
+  window.addEventListener("resize", () => {
+    clearInterval(matrixInterval);
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
+  });
+  
+  // --- Block DevTools, Right-click, Copy/Paste ---
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
     if (
@@ -176,37 +143,56 @@
   document.addEventListener("cut", (e) => e.preventDefault());
   document.addEventListener("paste", (e) => e.preventDefault());
   
-  // --- Secret Reset Shortcuts ---
+  // --- SECRET RESET MECHANISM ---
   
-  // PC Shortcut (Ctrl + ;)
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === ";") {
-      resetTimer();
-    }
-  });
+  // 1. Create hidden button
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "RESET TIMER";
+  resetButton.style.display = "none";
+  resetButton.style.position = "fixed";
+  resetButton.style.top = "20px";
+  resetButton.style.right = "20px";
+  resetButton.style.padding = "10px 20px";
+  resetButton.style.fontFamily = "monospace";
+  resetButton.style.fontSize = "1.2em";
+  resetButton.style.backgroundColor = "black";
+  resetButton.style.color = "lime";
+  resetButton.style.border = "1px solid lime";
+  resetButton.style.borderRadius = "5px";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.boxShadow = "0 0 10px lime";
+  resetButton.style.zIndex = "2000";
+  resetButton.addEventListener("click", resetTimer);
+  document.body.appendChild(resetButton);
   
-  // Mobile Long Press (Top right 5s)
+  // 2. Mobile: Tap 4 times top-right to reveal button
+  let tapCount = 0;
+  let tapTimeout;
   document.addEventListener("touchstart", (e) => {
     const touch = e.touches[0];
-    if (touch.clientX > window.innerWidth * 0.8 && touch.clientY < window.innerHeight * 0.2) {
-      longPressTimer = setTimeout(() => {
-        if (!isButtonVisible) {
-          resetBtn.style.display = "block";
-          isButtonVisible = true;
-        }
-      }, 5000); // 5 seconds hold
+    if (touch.clientX > window.innerWidth * 0.75 && touch.clientY < window.innerHeight * 0.25) {
+      tapCount++;
+      clearTimeout(tapTimeout);
+      tapTimeout = setTimeout(() => tapCount = 0, 1000); // Reset count after 1 sec
+  
+      if (tapCount >= 4) {
+        resetButton.style.display = "block";
+      }
     }
   });
   
-  document.addEventListener("touchend", () => {
-    clearTimeout(longPressTimer);
+  // 3. Desktop: Ctrl + ; to reveal button
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === ";") {
+      resetButton.style.display = "block";
+    }
   });
   
-  // Handle window resize
-  window.addEventListener("resize", () => {
-    clearInterval(matrixInterval);
-    initMatrix();
-    matrixInterval = setInterval(drawMatrix, 70);
-  });
+  // 4. Reset Timer Function
+  function resetTimer() {
+    localStorage.removeItem("puzzleStartTime");
+    localStorage.removeItem("puzzleExpiryTime");
+    location.reload();
+  }
   </script>
   
