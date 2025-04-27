@@ -19,180 +19,202 @@
 </style>
 
 <script>
-  // (Everything else like Matrix animation, expiry, and blocking right-click stays same)
-  
-  const canvas = document.getElementById("matrix");
-  const ctx = canvas.getContext("2d");
-  
-  let fontSize = 30;
-  let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-  let hex = "4D4F564945".split(""); // "MOVIE" in hex
-  
-  let columns, drops, hexTimers;
-  let matrixInterval;
-  const EXPIRY_DURATION = 90 * 60 * 1000; // 90 minutes
-  
-  function initMatrix() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    columns = Math.floor(canvas.width / fontSize);
-    drops = new Array(columns).fill(1);
-    hexTimers = [];
-    setInterval(spawnHexDrop, 5000);
-  }
-  
-  function spawnHexDrop() {
-    const randomColumn = Math.floor(Math.random() * columns);
-    hexTimers.push({ column: randomColumn, dropIndex: 0, isVisible: true });
-  }
-  
-  function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = `${fontSize}px monospace`;
-    ctx.fillStyle = "#0F0";
-    ctx.shadowBlur = 0;
-  
-    for (let i = 0; i < columns; i++) {
-      const text = letters[Math.floor(Math.random() * letters.length)];
-      const y = drops[i] * fontSize;
-      ctx.fillText(text, i * fontSize, y);
-  
-      if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
-      drops[i]++;
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+let fontSize = 30;
+let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
+let hex = "4D4F564945".split(""); // "MOVIE" in hex
+
+let columns, drops, hexTimers;
+let matrixInterval;
+const EXPIRY_DURATION = 90 * 60 * 1000; // 90 minutes in milliseconds
+
+function initMatrix() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  columns = Math.floor(canvas.width / fontSize);
+  drops = new Array(columns).fill(1);
+
+  hexTimers = [];
+
+  setInterval(spawnHexDrop, 5000);
+}
+
+function spawnHexDrop() {
+  const randomColumn = Math.floor(Math.random() * columns);
+  hexTimers.push({
+    column: randomColumn,
+    dropIndex: 0,
+    isVisible: true,
+  });
+}
+
+function drawMatrix() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = `${fontSize}px monospace`;
+
+  ctx.fillStyle = "#0F0";
+  ctx.shadowBlur = 0;
+
+  for (let i = 0; i < columns; i++) {
+    const text = letters[Math.floor(Math.random() * letters.length)];
+    const y = drops[i] * fontSize;
+    ctx.fillText(text, i * fontSize, y);
+
+    if (y > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
     }
-  
-    ctx.fillStyle = "#00FFFF";
-    ctx.shadowColor = "#00FFFF";
-    ctx.shadowBlur = 20;
-  
-    for (let i = hexTimers.length - 1; i >= 0; i--) {
-      const timer = hexTimers[i];
-      if (timer.isVisible) {
-        const x = timer.column * fontSize;
-        const y = timer.dropIndex * fontSize;
-        const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-        if (y > 0 && y < canvas.height) ctx.fillText(hex[currentCharIndex], x, y);
-        timer.dropIndex++;
-        if (y > canvas.height + hex.length * fontSize) {
-          timer.isVisible = false;
-          drops[timer.column] = 1;
-          hexTimers.splice(i, 1);
-        }
+    drops[i]++;
+  }
+
+  ctx.fillStyle = "#00FFFF";
+  ctx.shadowColor = "#00FFFF";
+  ctx.shadowBlur = 20;
+
+  for (let i = hexTimers.length - 1; i >= 0; i--) {
+    const timer = hexTimers[i];
+    if (timer.isVisible) {
+      const x = timer.column * fontSize;
+      const y = timer.dropIndex * fontSize;
+      const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
+
+      if (y > 0 && y < canvas.height) {
+        ctx.fillText(hex[currentCharIndex], x, y);
+      }
+
+      timer.dropIndex++;
+
+      if (y > canvas.height + hex.length * fontSize) {
+        timer.isVisible = false;
+        drops[timer.column] = 1;
+        hexTimers.splice(i, 1);
       }
     }
-    ctx.shadowBlur = 0;
   }
-  
-  const countdownEl = document.getElementById("countdown");
-  let countdownNum = 3;
-  countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-  const countdownInterval = setInterval(() => {
-    countdownNum--;
-    if (countdownNum > 0) {
-      countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-    } else {
-      clearInterval(countdownInterval);
-      countdownEl.textContent = "";
-      startMatrix();
-    }
+
+  ctx.shadowBlur = 0;
+}
+
+// Countdown before matrix starts
+const countdownEl = document.getElementById("countdown");
+let countdownNum = 3;
+countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+
+const countdownInterval = setInterval(() => {
+  countdownNum--;
+  if (countdownNum > 0) {
+    countdownEl.textContent = `Timer starting in ${countdownNum}...`;
+  } else {
+    clearInterval(countdownInterval);
+    countdownEl.textContent = "";
+    startMatrix();
+  }
+}, 1000);
+
+function startMatrix() {
+  const now = Date.now();
+  let startTime = parseInt(localStorage.getItem("puzzleStartTime"), 10);
+  let expiryTime = parseInt(localStorage.getItem("puzzleExpiryTime"), 10);
+
+  if (!startTime || !expiryTime || isNaN(startTime) || isNaN(expiryTime) || now > expiryTime) {
+    // First time or expired
+    startTime = now;
+    expiryTime = now + EXPIRY_DURATION;
+    localStorage.setItem("puzzleStartTime", startTime.toString());
+    localStorage.setItem("puzzleExpiryTime", expiryTime.toString());
+  }
+
+  initMatrix();
+  matrixInterval = setInterval(drawMatrix, 70);
+
+  const timerEl = document.getElementById("timer");
+  setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const secs = String(elapsed % 60).padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
   }, 1000);
-  
-  function startMatrix() {
+}
+
+// Handle window resize
+window.addEventListener("resize", () => {
+  clearInterval(matrixInterval);
+  initMatrix();
+  matrixInterval = setInterval(drawMatrix, 70);
+});
+
+// --- Block DevTools, Right-click, Copy/Paste ---
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+document.addEventListener("keydown", (e) => {
+  if (
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
+    (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
+  ) {
+    e.preventDefault();
+  }
+});
+document.addEventListener("copy", (e) => e.preventDefault());
+document.addEventListener("cut", (e) => e.preventDefault());
+document.addEventListener("paste", (e) => e.preventDefault());
+
+// --- SECRET RESET MECHANISM ---
+
+// 1. Create hidden button
+const resetButton = document.createElement("button");
+resetButton.textContent = "RESET TIMER";
+resetButton.style.display = "none";
+resetButton.style.position = "fixed";
+resetButton.style.top = "20px";
+resetButton.style.right = "20px";
+resetButton.style.padding = "10px 20px";
+resetButton.style.fontFamily = "monospace";
+resetButton.style.fontSize = "1.2em";
+resetButton.style.backgroundColor = "black";
+resetButton.style.color = "lime";
+resetButton.style.border = "1px solid lime";
+resetButton.style.borderRadius = "5px";
+resetButton.style.cursor = "pointer";
+resetButton.style.boxShadow = "0 0 10px lime";
+resetButton.style.zIndex = "2000";
+resetButton.addEventListener("click", resetTimer);
+document.body.appendChild(resetButton);
+
+// 2. Tap 3 times top-right to reveal button (Mobile)
+let tapTimes = [];
+
+document.addEventListener("touchend", (e) => {
+  const touch = e.changedTouches[0];
+  if (touch.clientX > window.innerWidth * 0.75 && touch.clientY < window.innerHeight * 0.25) {
     const now = Date.now();
-    let startTime = parseInt(localStorage.getItem("puzzleStartTime"), 10);
-    let expiryTime = parseInt(localStorage.getItem("puzzleExpiryTime"), 10);
-  
-    if (!startTime || !expiryTime || isNaN(startTime) || isNaN(expiryTime) || now > expiryTime) {
-      startTime = now;
-      expiryTime = now + EXPIRY_DURATION;
-      localStorage.setItem("puzzleStartTime", startTime.toString());
-      localStorage.setItem("puzzleExpiryTime", expiryTime.toString());
-    }
-  
-    initMatrix();
-    matrixInterval = setInterval(drawMatrix, 70);
-  
-    const timerEl = document.getElementById("timer");
-    setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
-      const secs = String(elapsed % 60).padStart(2, "0");
-      timerEl.textContent = `${mins}:${secs}`;
-    }, 1000);
-  }
-  
-  window.addEventListener("resize", () => {
-    clearInterval(matrixInterval);
-    initMatrix();
-    matrixInterval = setInterval(drawMatrix, 70);
-  });
-  
-  // --- Block DevTools, Right-click, Copy/Paste ---
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", (e) => {
-    if (
-      e.key === "F12" ||
-      (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
-      (e.ctrlKey && ["U", "S"].includes(e.key.toUpperCase()))
-    ) {
-      e.preventDefault();
-    }
-  });
-  document.addEventListener("copy", (e) => e.preventDefault());
-  document.addEventListener("cut", (e) => e.preventDefault());
-  document.addEventListener("paste", (e) => e.preventDefault());
-  
-  // --- SECRET RESET MECHANISM ---
-  
-  // 1. Create hidden button
-  const resetButton = document.createElement("button");
-  resetButton.textContent = "RESET TIMER";
-  resetButton.style.display = "none";
-  resetButton.style.position = "fixed";
-  resetButton.style.top = "20px";
-  resetButton.style.right = "20px";
-  resetButton.style.padding = "10px 20px";
-  resetButton.style.fontFamily = "monospace";
-  resetButton.style.fontSize = "1.2em";
-  resetButton.style.backgroundColor = "black";
-  resetButton.style.color = "lime";
-  resetButton.style.border = "1px solid lime";
-  resetButton.style.borderRadius = "5px";
-  resetButton.style.cursor = "pointer";
-  resetButton.style.boxShadow = "0 0 10px lime";
-  resetButton.style.zIndex = "2000";
-  resetButton.addEventListener("click", resetTimer);
-  document.body.appendChild(resetButton);
-  
-  // 2. Mobile: Tap 4 times top-right to reveal button
-  let tapCount = 0;
-  let tapTimeout;
-  document.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    if (touch.clientX > window.innerWidth * 0.75 && touch.clientY < window.innerHeight * 0.25) {
-      tapCount++;
-      clearTimeout(tapTimeout);
-      tapTimeout = setTimeout(() => tapCount = 0, 1000); // Reset count after 1 sec
-  
-      if (tapCount >= 4) {
-        resetButton.style.display = "block";
-      }
-    }
-  });
-  
-  // 3. Desktop: Ctrl + ; to reveal button
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === ";") {
+    tapTimes.push(now);
+
+    if (tapTimes.length > 3) tapTimes.shift();
+
+    if (tapTimes.length === 3 && (tapTimes[2] - tapTimes[0] <= 800)) {
       resetButton.style.display = "block";
+      tapTimes = [];
     }
-  });
-  
-  // 4. Reset Timer Function
-  function resetTimer() {
-    localStorage.removeItem("puzzleStartTime");
-    localStorage.removeItem("puzzleExpiryTime");
-    location.reload();
+  } else {
+    tapTimes = [];
   }
-  </script>
-  
+});
+
+// 3. Ctrl + ; to reveal button (Desktop)
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === ";") {
+    resetButton.style.display = "block";
+  }
+});
+
+// 4. Reset Timer Function
+function resetTimer() {
+  localStorage.removeItem("puzzleStartTime");
+  localStorage.removeItem("puzzleExpiryTime");
+  location.reload();
+}
+</script>
