@@ -1,7 +1,6 @@
 <canvas id="matrix"></canvas>
 <div id="countdown" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 2em; color: lime; font-family: monospace; z-index: 1000;"></div>
 <div id="timer" style="position: fixed; bottom: 10px; left: 10px; font-size: 1.5em; color: lime; font-family: monospace; z-index: 1000;">00:00</div>
-<button id="resetTimer" style="position: fixed; top: 20px; right: 20px; opacity: 0; pointer-events: none; background: red; color: white; border: none; padding: 10px; font-weight: bold; z-index: 1000; border-radius: 5px;">RESET TIMER</button>
 
 <style>
   body {
@@ -22,70 +21,96 @@
 <script>
   const canvas = document.getElementById("matrix");
   const ctx = canvas.getContext("2d");
-
+  
+  // (your previous variables here)
   let fontSize = 30;
   let letters = "アァイィウエオカサタナハマヤラワ0123456789ABCDEF".split("");
-  let hex = "4D4F564945".split(""); // "MOVIE" in hex
-
+  let hex = "4D4F564945".split("");
+  
   let columns, drops, hexTimers;
-
+  let matrixInterval;
+  const EXPIRY_DURATION = 90 * 60 * 1000; // 90 minutes
+  let longPressTimer;
+  let isButtonVisible = false;
+  
+  // Create secret reset button (hidden by default)
+  const resetBtn = document.createElement('button');
+  resetBtn.textContent = "Reset Timer";
+  resetBtn.style.position = "fixed";
+  resetBtn.style.top = "10px";
+  resetBtn.style.right = "10px";
+  resetBtn.style.padding = "10px 20px";
+  resetBtn.style.background = "lime";
+  resetBtn.style.color = "black";
+  resetBtn.style.fontWeight = "bold";
+  resetBtn.style.border = "none";
+  resetBtn.style.borderRadius = "5px";
+  resetBtn.style.cursor = "pointer";
+  resetBtn.style.zIndex = 2000;
+  resetBtn.style.display = "none"; // hidden initially
+  document.body.appendChild(resetBtn);
+  
+  // Reset Timer Logic
+  function resetTimer() {
+    localStorage.removeItem("puzzleStartTime");
+    localStorage.removeItem("puzzleExpiryTime");
+    location.reload();
+  }
+  
+  // Button click resets the timer
+  resetBtn.addEventListener("click", resetTimer);
+  
   function initMatrix() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
+  
     columns = Math.floor(canvas.width / fontSize);
     drops = new Array(columns).fill(1);
-
     hexTimers = [];
+  
     setInterval(spawnHexDrop, 5000);
   }
-
+  
   function spawnHexDrop() {
     const randomColumn = Math.floor(Math.random() * columns);
-    hexTimers.push({
-      column: randomColumn,
-      dropIndex: 0,
-      isVisible: true,
-    });
+    hexTimers.push({ column: randomColumn, dropIndex: 0, isVisible: true });
   }
-
+  
   function drawMatrix() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.font = `${fontSize}px monospace`;
-
     ctx.fillStyle = "#0F0";
     ctx.shadowBlur = 0;
-
+  
     for (let i = 0; i < columns; i++) {
       const text = letters[Math.floor(Math.random() * letters.length)];
       const y = drops[i] * fontSize;
       ctx.fillText(text, i * fontSize, y);
-
+  
       if (y > canvas.height && Math.random() > 0.975) {
         drops[i] = 0;
       }
       drops[i]++;
     }
-
-    ctx.fillStyle = "#AEFF17";
-    ctx.shadowColor = "#AEFF17";
+  
+    ctx.fillStyle = "#00FFFF";
+    ctx.shadowColor = "#00FFFF";
     ctx.shadowBlur = 20;
-
+  
     for (let i = hexTimers.length - 1; i >= 0; i--) {
       const timer = hexTimers[i];
       if (timer.isVisible) {
         const x = timer.column * fontSize;
         const y = timer.dropIndex * fontSize;
         const currentCharIndex = Math.floor(timer.dropIndex) % hex.length;
-
+  
         if (y > 0 && y < canvas.height) {
           ctx.fillText(hex[currentCharIndex], x, y);
         }
-
+  
         timer.dropIndex++;
-
+  
         if (y > canvas.height + hex.length * fontSize) {
           timer.isVisible = false;
           drops[timer.column] = 1;
@@ -93,15 +118,14 @@
         }
       }
     }
-
     ctx.shadowBlur = 0;
   }
-
-  let matrixInterval;
+  
+  // Countdown logic
   const countdownEl = document.getElementById("countdown");
   let countdownNum = 3;
   countdownEl.textContent = `Timer starting in ${countdownNum}...`;
-
+  
   const countdownInterval = setInterval(() => {
     countdownNum--;
     if (countdownNum > 0) {
@@ -112,35 +136,32 @@
       startMatrix();
     }
   }, 1000);
-
+  
   function startMatrix() {
-  const now = Date.now();
-  let startTime = parseInt(localStorage.getItem("puzzleStartTime"), 10);
-
-  // If no startTime saved, or invalid, or elapsed time > 10 minutes → reset
-  if (!startTime || isNaN(startTime) || (now - startTime > 10 * 60 * 1000)) {
-    startTime = now;
-    localStorage.setItem("puzzleStartTime", startTime.toString());
-  }
-
-  initMatrix();
-  matrixInterval = setInterval(drawMatrix, 70);
-
-  const timerEl = document.getElementById("timer");
-  setInterval(() => {
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
-    const secs = String(elapsed % 60).padStart(2, "0");
-    timerEl.textContent = `${mins}:${secs}`;
-  }, 1000);
-}
-
-  window.addEventListener("resize", () => {
-    clearInterval(matrixInterval);
+    const now = Date.now();
+    let startTime = parseInt(localStorage.getItem("puzzleStartTime"), 10);
+    let expiryTime = parseInt(localStorage.getItem("puzzleExpiryTime"), 10);
+  
+    if (!startTime || !expiryTime || isNaN(startTime) || isNaN(expiryTime) || now > expiryTime) {
+      startTime = now;
+      expiryTime = now + EXPIRY_DURATION;
+      localStorage.setItem("puzzleStartTime", startTime.toString());
+      localStorage.setItem("puzzleExpiryTime", expiryTime.toString());
+    }
+  
     initMatrix();
     matrixInterval = setInterval(drawMatrix, 70);
-  });
-
+  
+    const timerEl = document.getElementById("timer");
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const secs = String(elapsed % 60).padStart(2, "0");
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
+  
+  // --- DevTools and basic protection ---
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
     if (
@@ -154,33 +175,38 @@
   document.addEventListener("copy", (e) => e.preventDefault());
   document.addEventListener("cut", (e) => e.preventDefault());
   document.addEventListener("paste", (e) => e.preventDefault());
-
-  // --- Timer continues even when user switches tab ---
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      // Nothing needed, timer works based on real time
-    }
-  });
-
-  // --- Hidden Reset Timer Button ---
-  const resetBtn = document.getElementById("resetTimer");
-
+  
+  // --- Secret Reset Shortcuts ---
+  
+  // PC Shortcut (Ctrl + ;)
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === ";") { // CTRL + ;
-      resetBtn.style.opacity = 1;
-      resetBtn.style.pointerEvents = "auto";
-      resetBtn.style.background = "red";
-      resetBtn.textContent = "RESET TIMER";
-
-      setTimeout(() => {
-        resetBtn.style.opacity = 0;
-        resetBtn.style.pointerEvents = "none";
-      }, 5000);
+    if (e.ctrlKey && e.key === ";") {
+      resetTimer();
     }
   });
-
-  resetBtn.addEventListener("click", () => {
-    localStorage.removeItem("puzzleStartTime");
-    location.reload();
+  
+  // Mobile Long Press (Top right 5s)
+  document.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    if (touch.clientX > window.innerWidth * 0.8 && touch.clientY < window.innerHeight * 0.2) {
+      longPressTimer = setTimeout(() => {
+        if (!isButtonVisible) {
+          resetBtn.style.display = "block";
+          isButtonVisible = true;
+        }
+      }, 5000); // 5 seconds hold
+    }
   });
-</script>
+  
+  document.addEventListener("touchend", () => {
+    clearTimeout(longPressTimer);
+  });
+  
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    clearInterval(matrixInterval);
+    initMatrix();
+    matrixInterval = setInterval(drawMatrix, 70);
+  });
+  </script>
+  
