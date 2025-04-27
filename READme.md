@@ -2,7 +2,7 @@ Cicada 3301 Puzzle Challenge
 
 Welcome to Cicada 3301 Puzzle Challenge — a multi-stage, cryptic puzzle hunt built for a college event!
 
-This project was created as part of a college event, where I developed and structured the full system — designing the workflow, implementing features, and building the complete experience. My friends contributed significantly by helping with design choices, structural ideas, and crafting the clues that players encounter throughout the challenge.
+This project was created as part of a college event, where my freinds & I developed and structured the full system — designing the workflow, implementing features,design choices, structural ideas,crafting the clues and building the complete experience that players encounter throughout the challenge.
 
 📚 About the Versions
 
