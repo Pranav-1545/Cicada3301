@@ -184,6 +184,16 @@ resetButton.style.zIndex = "2000";
 resetButton.addEventListener("click", resetTimer);
 document.body.appendChild(resetButton);
 
+// Function to show the reset button and hide it after 5 seconds
+function showResetButtonTemporarily() {
+  resetButton.style.display = "block";
+  
+  // Hide the button after 5 seconds
+  setTimeout(() => {
+    resetButton.style.display = "none";
+  }, 5000);
+}
+
 // 2. Tap 3 times top-right to reveal button (Mobile)
 let tapTimes = [];
 
@@ -196,7 +206,7 @@ document.addEventListener("touchend", (e) => {
     if (tapTimes.length > 3) tapTimes.shift();
 
     if (tapTimes.length === 3 && (tapTimes[2] - tapTimes[0] <= 800)) {
-      resetButton.style.display = "block";
+      showResetButtonTemporarily();
       tapTimes = [];
     }
   } else {
@@ -207,7 +217,7 @@ document.addEventListener("touchend", (e) => {
 // 3. Ctrl + ; to reveal button (Desktop)
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.key === ";") {
-    resetButton.style.display = "block";
+    showResetButtonTemporarily();
   }
 });
 

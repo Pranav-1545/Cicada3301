@@ -16,6 +16,11 @@
   canvas {
     display: block;
   }
+
+  /* Optional: Make reset button fade out smoothly */
+  #reset-button {
+    transition: opacity 0.5s ease;
+  }
 </style>
 
 <script>
@@ -123,7 +128,6 @@ function startMatrix() {
   let expiryTime = parseInt(localStorage.getItem("puzzleExpiryTime"), 10);
 
   if (!startTime || !expiryTime || isNaN(startTime) || isNaN(expiryTime) || now > expiryTime) {
-    // First time or expired
     startTime = now;
     expiryTime = now + EXPIRY_DURATION;
     localStorage.setItem("puzzleStartTime", startTime.toString());
@@ -168,6 +172,7 @@ document.addEventListener("paste", (e) => e.preventDefault());
 
 // 1. Create hidden button
 const resetButton = document.createElement("button");
+resetButton.id = "reset-button";
 resetButton.textContent = "RESET TIMER";
 resetButton.style.display = "none";
 resetButton.style.position = "fixed";
@@ -186,7 +191,19 @@ resetButton.style.zIndex = "2000";
 resetButton.addEventListener("click", resetTimer);
 document.body.appendChild(resetButton);
 
-// 2. Tap 3 times top-right to reveal button (Mobile)
+// 2. Function to show the button temporarily
+function showResetButtonTemporarily() {
+  resetButton.style.display = "block";
+  resetButton.style.opacity = "1";
+  setTimeout(() => {
+    resetButton.style.opacity = "0";
+    setTimeout(() => {
+      resetButton.style.display = "none";
+    }, 500); // Wait for fade out transition
+  }, 5000);
+}
+
+// 3. Tap 3 times top-right to reveal button (Mobile)
 let tapTimes = [];
 
 document.addEventListener("touchend", (e) => {
@@ -198,7 +215,7 @@ document.addEventListener("touchend", (e) => {
     if (tapTimes.length > 3) tapTimes.shift();
 
     if (tapTimes.length === 3 && (tapTimes[2] - tapTimes[0] <= 800)) {
-      resetButton.style.display = "block";
+      showResetButtonTemporarily();
       tapTimes = [];
     }
   } else {
@@ -206,24 +223,24 @@ document.addEventListener("touchend", (e) => {
   }
 });
 
-// 3. Ctrl + ; to reveal button (Desktop)
+// 4. Ctrl + ; to reveal button (Desktop)
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.key === ";") {
-    resetButton.style.display = "block";
+    showResetButtonTemporarily();
   }
 });
 
-// 4. Reset Timer Function
+// 5. Reset Timer Function
 function resetTimer() {
   localStorage.removeItem("puzzleStartTime");
   localStorage.removeItem("puzzleExpiryTime");
   location.reload();
 }
 
-// 5. Handle visibility change
+// 6. Handle visibility change
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
-    // Nothing needed, timer works based on real time
+    // Nothing needed
   }
 });
 </script>
