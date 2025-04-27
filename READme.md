@@ -1,7 +1,7 @@
 Cicada 3301 Puzzle Challenge
 Welcome to Cicada 3301 Puzzle Challenge — a multi-stage, cryptic puzzle hunt built for a college event!
-Although the core idea of a mystery puzzle wasn't originally mine, I designed, developed, and crafted every detail of this project — from user workflow to features, visuals, clue progression, and final mission structure.
 
+This project was created as part of a college event, where I developed and structured the full system — designing the workflow, implementing features, and building the complete experience. My friends contributed significantly by helping with design choices, structural ideas, and crafting the clues that players encounter throughout the challenge.
 
 📚 About the Versions
 Version 1:
@@ -11,7 +11,7 @@ Version 2:
 🧩 Code snippet puzzles — Players encounter encrypted messages, codes, and logic traps.
 
 Version 3:
-🎬 Movie-themed puzzles (Telugu movies) — Participants crack hints inspired by cinema classics.
+🎬 Movie-themed puzzles (Telugu and English movies) — Participants crack hints inspired by cinema classics.
 
 Each version offers a completely different feel and challenge style, while maintaining a unified experience.
 
@@ -100,9 +100,3 @@ Version 3: https://cicada3303.vercel.app/
 Originally, the final stage of this puzzle was designed to be completed at real-world locations across our college campus using physical QR codes.
 
 For the purpose of open access, the final QR clues (Clues 6–9) are provided inside the /final-clues/ folder — allowing anyone to fully complete the experience digitally!
-
-
-
-🤖 Special Thanks
-
-Assistance and idea refinement with AI chatbots during development.
