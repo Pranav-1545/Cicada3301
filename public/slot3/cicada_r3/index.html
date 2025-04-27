@@ -222,11 +222,11 @@
   <div id="timer">00:00</div>
 
   <div class="floating-tabs" id="initialClues">
-    <a href="#" onclick="window.open('https://drive.google.com/file/d/1hgExt03Eby7hgv5Kf0vVWEBYGXUiQ2z0/view?usp=drive_link')">Clue 1</a>
-    <a href="#" onclick="window.open('https://drive.google.com/file/d/1G424xcXIg3Xwt2NsmDFzM9moh6IqgibC/view?usp=drive_link')">Clue 2</a>
-    <a href="#" onclick="window.open('https://drive.google.com/file/d/1cgS01T7GvLoiFV6XB-y4Ac97JxHqF_5i/view?usp=drive_link')">Clue 3</a>
-    <a href="#" onclick="window.open('https://drive.google.com/file/d/1Qus8F0ADoyCZe9EF0HGFcOD8s_JeGPwf/view?usp=drive_link')">Clue 4</a>
-    <a href="#" onclick="window.open('https://drive.google.com/file/d/12Quq6NKwFS2L5LG1Jv5gEvP5AneQORWb/view?usp=drive_link')">Clue 5</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1Zb-gKzv02HafWm3NSTcITaJquHyD2KMU/view?usp=drive_link')">Clue 1</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1aAUC8dIGZlRRvmDkvqQoF-KpXMsOwo-r/view?usp=drive_link')">Clue 2</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1qFLWKMhIEyLB5lIatpNDw6YGsCTxEVDU/view?usp=drive_link')">Clue 3</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1fRVZzatDlnqg7zRnoBwDX3Tt8iCXZSDb/view?usp=drive_link')">Clue 4</a>
+    <a href="#" onclick="window.open('https://drive.google.com/file/d/1l0vCBolQ7pQclmlKI8AWNeXqWh73-2MZ/view?usp=drive_link')">Clue 5</a>
   </div>
 
   <div class="main-content" id="mainContent">
@@ -255,10 +255,8 @@
     </div>
 
     <div id="poemText" style="display:none;">
-      Each Across, a piece of thread,<br>
-      Its starting letter, gently read.<br>
-      In order placed, from top to base,<br>
-      They spell the key to end this chase.
+      Collect the ends where each line bows,<br>
+      And from their tails, the secret shows.
     </div>
 
     <div id="finalText" style="display:none;">
@@ -284,8 +282,8 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
   <script>
-    const validBinaries = [(2023).toString(2), (2024).toString(2)];
-    const correctNumber = "20232020201020082024";
+    const validBinaries = [(2013).toString(2), (2004).toString(2)];
+    const correctNumber = "19722013200420132014";
     const qrValues = { "clue6": "clue 6", "clue7": "clue 7", "clue8": "clue 8", "clue9": "clue 9" };
     let completedClues = { "clue6": false, "clue7": false, "clue8": false, "clue9": false };
     let currentClue = null, qrScanner = null;
@@ -304,7 +302,7 @@
 
     function checkNumber() {
       if (document.getElementById('numberInput').value === correctNumber) {
-        [2023,2020,2010,2008,2024].forEach((n,i)=>document.getElementById(`bin${i+1}`).textContent=n.toString(2));
+        [1972,2013,2004,2013,2014].forEach((n,i)=>document.getElementById(`bin${i+1}`).textContent=n.toString(2));
         document.getElementById('binarySection').style.display = 'block';
       } else {
         alert("Incorrect number. Try again!");
@@ -312,7 +310,7 @@
     }
 
     function openCrosswordInBackground() {
-      const newWindow = window.open('https://crosswordlabs.com/view/cicada-58', '_blank');
+      const newWindow = window.open('https://crosswordlabs.com/view/cicada-61', '_blank');
       if (!newWindow) alert("Please allow popups for this website.");
     }
 
@@ -348,10 +346,10 @@
 
     function getClueLink(id) {
       return {
-        clue6: 'https://drive.google.com/file/d/1k11sKtLTR6KuNBzpjPnv6j0W2einnbQt/view?usp=drive_link',
-        clue7: 'https://drive.google.com/file/d/13dJem8AVPzVie4o7ho90RJ5dSTk5VJp7/view?usp=drive_link',
-        clue8: 'https://drive.google.com/file/d/181wBLzg-fE2--SYkV5oBcNoNb7qZ8pKs/view?usp=drive_link',
-        clue9: 'https://drive.google.com/file/d/1SsrzHAkFc203YjgXpQ2tH9E78EiyjkB9/view?usp=drive_link'
+        clue6: 'https://drive.google.com/file/d/1tjH58T3riU8FrKtD_hgOSCdAsCfUU3zw/view?usp=drive_link',
+        clue7: 'https://drive.google.com/file/d/1wDQYDjPCdtsBIAKEDn3-99vXphNLwlvE/view?usp=drive_link',
+        clue8: 'https://drive.google.com/file/d/10gOMhCv3S9QioX1BgZU6IIucRko4dk7R/view?usp=sharing',
+        clue9: 'https://drive.google.com/file/d/1UmBESjDtfK0UellEvrJcbdRyzG3yjTEW/view?usp=drive_link'
       }[id];
     }
 
