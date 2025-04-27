@@ -1,9 +1,11 @@
 Cicada 3301 Puzzle Challenge
+
 Welcome to Cicada 3301 Puzzle Challenge — a multi-stage, cryptic puzzle hunt built for a college event!
 
 This project was created as part of a college event, where I developed and structured the full system — designing the workflow, implementing features, and building the complete experience. My friends contributed significantly by helping with design choices, structural ideas, and crafting the clues that players encounter throughout the challenge.
 
 📚 About the Versions
+
 Version 1:
 🎧 Audio-based riddles — Participants decode hidden sound clues to move forward.
 
@@ -14,6 +16,7 @@ Version 3:
 🎬 Movie-themed puzzles (Telugu and English movies) — Participants crack hints inspired by cinema classics.
 
 Each version offers a completely different feel and challenge style, while maintaining a unified experience.
+
 
 
 🌟 Core Features
@@ -43,6 +46,7 @@ Each version offers a completely different feel and challenge style, while maint
 -QR code scanning for final mission verification
 
 
+
 🔐Security Features:
 
 
@@ -53,6 +57,7 @@ Each version offers a completely different feel and challenge style, while maint
 -Mobile and Desktop Friendly
 
 
+
 🔗 Live Versions (Play Now!)
 
 
@@ -61,6 +66,7 @@ Version 1: https://cicada3301.vercel.app/
 Version 2: https://cicada3302.vercel.app/
 
 Version 3: https://cicada3303.vercel.app/
+
 
 
 🚀 Tech Stack
@@ -74,6 +80,7 @@ Version 3: https://cicada3303.vercel.app/
 -Google Drive for clue hosting
 
 -Vercel for seamless deployment
+
 
 
 🧩 How to Play
@@ -93,6 +100,7 @@ Version 3: https://cicada3303.vercel.app/
 7.Scan the QR codes to complete the final stage and win!
 
 ⏳ Remember: the timer is always running. Speed and accuracy matter!
+
 
 
 📝 Important Note
