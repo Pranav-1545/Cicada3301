@@ -93,9 +93,9 @@ Version 3: https://cicada3303.vercel.app/
 
 4.Complete the manual binary challenge (no copy-paste!).
 
-5.Solve the custom crossword puzzle hinted at by the provided poem.
+5.Solve the custom crossword puzzle.
 
-6.Enter the correct final passkey.
+6.Enter the correct final passkey from the crossword that is hinted at by the provided poem.
 
 7.Scan the QR codes to complete the final stage and win!
 
